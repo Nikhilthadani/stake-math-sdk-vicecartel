@@ -2,6 +2,7 @@
 
 import random as _rng
 from game_calculations import GameCalculations
+from game_config import MYSTERY_TRIGGER_PROB, MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X
 from game_events import (
     reveal_event, wild_reel_event, spin_multiplier_event, scatter_pay_event,
     mystery_trigger_event, wheel_spin_event, sticky_wild_update_event,
@@ -24,6 +25,22 @@ class GameExecutables(GameCalculations):
                 for row in range(self.config.num_rows[reel]):
                     self.board[reel][row] = self.symbol_storage.create_symbol("W")
                 wild_reel_event(self, reel, mult)
+        reveal_event(self)
+
+    def draw_min2wild_board(self, extra_wild_prob: float) -> None:
+        """Force 2 Wild reels + roll extra-wild on remaining 3. No mystery/bonus."""
+        self.wild_reels: dict[int, int] = {}
+        self.create_board_reelstrips()
+        forced = _rng.sample(range(self.config.num_reels), 2)
+        for reel in forced:
+            self.wild_reels[reel] = self.draw_wild_multiplier()
+        for reel in range(self.config.num_reels):
+            if reel not in forced and _rng.random() < extra_wild_prob:
+                self.wild_reels[reel] = self.draw_wild_multiplier()
+        for reel, mult in self.wild_reels.items():
+            for row in range(self.config.num_rows[reel]):
+                self.board[reel][row] = self.symbol_storage.create_symbol("W")
+            wild_reel_event(self, reel, mult)
         reveal_event(self)
 
     def evaluate_lines_with_wilds(self) -> None:
@@ -52,8 +69,9 @@ class GameExecutables(GameCalculations):
             self.win_manager.update_spinwin(payout)
             scatter_pay_event(self, count, payout)
 
-    def check_mystery_trigger(self) -> str | None:
-        outcome = self.mystery_check()
+    def check_mystery_trigger(self, trigger_prob: float | None = None) -> str | None:
+        prob = trigger_prob if trigger_prob is not None else MYSTERY_TRIGGER_PROB
+        outcome = self.mystery_check(prob)
         if outcome and outcome != "no_bonus":
             mystery_trigger_event(self, outcome)
             self.record({"kind": "mystery", "outcome": outcome, "gametype": self.gametype})

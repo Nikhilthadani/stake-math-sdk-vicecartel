@@ -1,7 +1,24 @@
 """Vice Cartel — main game state."""
 
 from game_override import GameStateOverride
+from game_config import (
+    MYSTERY_TRIGGER_PROB, MYSTERY_TRIGGER_PROB_EXTRA_3X, MYSTERY_TRIGGER_PROB_EXTRA_5X,
+    MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X,
+)
 from game_events import update_freespin_event, freespin_end_event, survival_life_event
+
+# Mode → mystery trigger probability
+_TRIGGER_PROB_BY_MODE: dict[str, float] = {
+    "base": MYSTERY_TRIGGER_PROB,
+    "extra_chance_3x": MYSTERY_TRIGGER_PROB_EXTRA_3X,
+    "extra_chance_5x": MYSTERY_TRIGGER_PROB_EXTRA_5X,
+}
+
+# Mode → extra-wild probability for Min 2 Wild
+_MIN2WILD_EXTRA_PROB: dict[str, float] = {
+    "min2wild_200x": MIN2WILD_EXTRA_PROB_200X,
+    "min2wild_250x": MIN2WILD_EXTRA_PROB_250X,
+}
 
 
 class GameState(GameStateOverride):
@@ -18,6 +35,15 @@ class GameState(GameStateOverride):
                 self.repeat = False
                 break
 
+            if self.betmode in _MIN2WILD_EXTRA_PROB:
+                self.draw_min2wild_board(_MIN2WILD_EXTRA_PROB[self.betmode])
+                self.evaluate_lines_with_wilds()
+                self.evaluate_scatter_pay()
+                self.win_manager.update_gametype_wins(self.gametype)
+                self.evaluate_finalwin()
+                self.repeat = False
+                break
+
             self.draw_wild_board()
             self.evaluate_lines_with_wilds()
             self.evaluate_scatter_pay()
@@ -29,7 +55,8 @@ class GameState(GameStateOverride):
                 self.triggered_freegame = True
                 self.run_bonus(outcome)
             else:
-                outcome = self.check_mystery_trigger()
+                trigger_prob = _TRIGGER_PROB_BY_MODE.get(self.betmode, MYSTERY_TRIGGER_PROB)
+                outcome = self.check_mystery_trigger(trigger_prob)
                 if outcome and outcome != "no_bonus":
                     self.triggered_freegame = True
                     self.run_bonus(outcome)

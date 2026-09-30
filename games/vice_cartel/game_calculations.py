@@ -46,8 +46,8 @@ class GameCalculations(Executables):
         return scatter_pay.get(count, 0.0)
 
     @staticmethod
-    def mystery_check() -> str | None:
-        if random.random() >= MYSTERY_TRIGGER_PROB:
+    def mystery_check(trigger_prob: float = MYSTERY_TRIGGER_PROB) -> str | None:
+        if random.random() >= trigger_prob:
             return None
         return get_random_outcome(MYSTERY_OUTCOME_WEIGHTS)
 
