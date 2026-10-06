@@ -8,7 +8,7 @@ from game_config import (
     WILD_MULTIPLIER_WEIGHTS, BLUE_INCREMENT_WEIGHTS, YELLOW_EXTRA_TURNS_WEIGHTS,
     SURVIVAL_DEAD_SPIN_PROB, WHEEL_TRIGGER_PROB, WHEEL_RED_WEIGHT, WHEEL_BLUE_WEIGHT,
     WHEEL_YELLOW_WEIGHT, RED_DOUBLE_WILD_PROB, MYSTERY_TRIGGER_PROB,
-    MYSTERY_OUTCOME_WEIGHTS, PER_REEL_WILD_PROB, GOLDEN_CASE_REEL_HIT_PROB,
+    MYSTERY_OUTCOME_WEIGHTS, PER_REEL_WILD_PROB, GOLDEN_CASE_LETTER_PROB,
 )
 
 
@@ -77,6 +77,10 @@ class GameCalculations(Executables):
         return random.random() < prob
 
     @staticmethod
-    def golden_case_spin() -> tuple[list[bool], bool]:
-        hits = [random.random() < GOLDEN_CASE_REEL_HIT_PROB for _ in range(5)]
-        return hits, all(hits)
+    def golden_case_spin() -> tuple[int, bool]:
+        """Roll 3 letters (M, A, X) independently, with at-least-1 guarantee."""
+        q = GOLDEN_CASE_LETTER_PROB
+        while True:
+            letters = sum(1 for _ in range(3) if random.random() < q)
+            if letters >= 1:
+                return letters, letters == 3

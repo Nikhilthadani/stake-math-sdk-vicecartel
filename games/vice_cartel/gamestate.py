@@ -68,9 +68,12 @@ class GameState(GameStateOverride):
     def run_bonus(self, tier: str) -> None:
         self.gametype = self.config.freegame_type
         sticky_wilds, turns_left = self.setup_bonus(tier)
-        while turns_left > 0 and not self.get_wincap_triggered():
+        spin_count = 0
+        max_spins = 200  # safety cap — PAR avg is 12-16 spins
+        while turns_left > 0 and not self.get_wincap_triggered() and spin_count < max_spins:
             self.win_manager.reset_spin_win()
             self.win_data = {}
+            spin_count += 1
             update_freespin_event(self)
             sticky_wilds, turns_left = self.resolve_wheel(sticky_wilds, turns_left)
             self.run_bonus_spin(sticky_wilds)

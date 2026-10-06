@@ -14,10 +14,22 @@ from src.calculations.lines import Lines
 
 class GameExecutables(GameCalculations):
 
+    def _draw_independent_board(self) -> None:
+        """Draw 4 independent symbols per reel from the strip (PAR: each row draws independently)."""
+        self.refresh_special_syms()
+        self.reelstrip = self.config.reels["BR0"]
+        self.reel_positions = [0] * self.config.num_reels
+        self.anticipation = [0] * self.config.num_reels
+        for reel in range(self.config.num_reels):
+            strip = self.reelstrip[reel]
+            for row in range(self.config.num_rows[reel]):
+                sym_id = strip[_rng.randrange(len(strip))]
+                self.board[reel][row] = self.symbol_storage.create_symbol(sym_id)
+
     def draw_wild_board(self) -> None:
         """Draw board with per-reel Wild probability."""
         self.wild_reels: dict[int, int] = {}
-        self.create_board_reelstrips()
+        self._draw_independent_board()
         for reel in range(self.config.num_reels):
             if self.is_reel_wild():
                 mult = self.draw_wild_multiplier()
@@ -30,7 +42,7 @@ class GameExecutables(GameCalculations):
     def draw_min2wild_board(self, extra_wild_prob: float) -> None:
         """Force 2 Wild reels + roll extra-wild on remaining 3. No mystery/bonus."""
         self.wild_reels: dict[int, int] = {}
-        self.create_board_reelstrips()
+        self._draw_independent_board()
         forced = _rng.sample(range(self.config.num_reels), 2)
         for reel in forced:
             self.wild_reels[reel] = self.draw_wild_multiplier()
@@ -96,13 +108,16 @@ class GameExecutables(GameCalculations):
                 wheel_spin_event(self, "BLUE", {"reel": target, "increment": inc, "newMult": sticky_wilds[target]})
         elif segment == "YELLOW":
             extra = self.yellow_extra_turns()
-            turns_left += extra
+            if self.bonus_mode == "survival":
+                self.lives = min(self.lives + extra, 5)
+            else:
+                turns_left += extra
             wheel_spin_event(self, "YELLOW", {"extraTurns": extra})
         sticky_wild_update_event(self, sticky_wilds)
         return sticky_wilds, turns_left
 
     def run_bonus_spin(self, sticky_wilds: dict[int, int]) -> None:
-        self.create_board_reelstrips()
+        self._draw_independent_board()
         for reel, mult in sticky_wilds.items():
             for row in range(self.config.num_rows[reel]):
                 self.board[reel][row] = self.symbol_storage.create_symbol("W")
@@ -125,9 +140,10 @@ class GameExecutables(GameCalculations):
         set_total_event(self)
 
     def run_golden_case(self) -> None:
-        hits, is_win = self.golden_case_spin()
-        golden_case_reveal_event(self, hits, is_win)
+        letters, is_win = self.golden_case_spin()
+        golden_case_reveal_event(self, letters, is_win)
         if is_win:
             self.win_manager.update_spinwin(self.config.wincap)
             set_win_event(self)
+        self.win_manager.update_gametype_wins(self.gametype)
         set_total_event(self)

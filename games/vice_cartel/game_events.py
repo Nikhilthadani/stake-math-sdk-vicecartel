@@ -44,6 +44,6 @@ def bonus_choice_event(gamestate, mode: str) -> None:
     event = {"index": len(gamestate.book.events), "type": "bonusChoice", "mode": mode}
     gamestate.book.add_event(event)
 
-def golden_case_reveal_event(gamestate, gb_per_reel: list[bool], win: bool) -> None:
-    event = {"index": len(gamestate.book.events), "type": "goldenCaseReveal", "reelHits": gb_per_reel, "maxWin": win}
+def golden_case_reveal_event(gamestate, letters_landed: int, win: bool) -> None:
+    event = {"index": len(gamestate.book.events), "type": "goldenCaseReveal", "lettersLanded": letters_landed, "maxWin": win}
     gamestate.book.add_event(event)

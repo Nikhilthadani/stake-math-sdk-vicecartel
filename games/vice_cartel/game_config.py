@@ -32,9 +32,9 @@ WHEEL_BLUE_WEIGHT = 40
 WHEEL_YELLOW_WEIGHT = 25
 RED_DOUBLE_WILD_PROB = 0.10
 
-MYSTERY_TRIGGER_PROB = 0.00101631
-MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004538    # PAR §7: 1-in-220, 4.47× uplift
-MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008057    # PAR §7: 1-in-124, 7.93× uplift
+MYSTERY_TRIGGER_PROB = 0.00104304          # PAR v1.1: 1-in-959
+MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004640   # PAR v1.1 §7: 1-in-215, 4.45× uplift
+MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008238   # PAR v1.1 §7: 1-in-121, 7.90× uplift
 MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
     "normal_bonus": 40, "super_bonus": 20, "hidden_bonus": 5,
     "super_hidden_bonus": 1, "no_bonus": 34,
@@ -42,7 +42,7 @@ MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
 
 PER_REEL_WILD_PROB = 0.045
 
-GOLDEN_CASE_REEL_HIT_PROB = 0.521
+GOLDEN_CASE_LETTER_PROB = 0.291367  # PAR §5: per-letter q (before "at least 1" guarantee)
 
 MIN2WILD_EXTRA_PROB_200X = 0.396    # PAR §8: extra-wild P for 200x price
 MIN2WILD_EXTRA_PROB_250X = 0.438    # PAR §8: extra-wild P for 250x price
@@ -157,19 +157,18 @@ class GameConfig(Config):
                     Distribution(criteria="basegame", quota=1.0, conditions=base_conditions),
                 ],
             ),
-            # Golden Case — skipped until max win logic is finalized
-            # BetMode(
-            #     name="golden_case",
-            #     cost=1000.0,
-            #     rtp=self.rtp,
-            #     max_win=self.wincap,
-            #     auto_close_disabled=False,
-            #     is_feature=False,
-            #     is_buybonus=True,
-            #     distributions=[
-            #         Distribution(criteria="golden_case", quota=1.0, conditions=base_conditions),
-            #     ],
-            # ),
+            BetMode(
+                name="golden_case",
+                cost=1000.0,
+                rtp=self.rtp,
+                max_win=self.wincap,
+                auto_close_disabled=False,
+                is_feature=False,
+                is_buybonus=True,
+                distributions=[
+                    Distribution(criteria="golden_case", quota=1.0, conditions=base_conditions),
+                ],
+            ),
             BetMode(
                 name="extra_chance_3x",
                 cost=3.0,
