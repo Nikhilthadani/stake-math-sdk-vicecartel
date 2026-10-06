@@ -18,12 +18,12 @@ if __name__ == "__main__":
     profiling = False
 
     num_sim_args = {
-        "base": int(1e6)
-        # "golden_case": int(1e6),
-        # "extra_chance_3x": int(1e6),
-        # "extra_chance_5x": int(1e6),
-        # "min2wild_200x": int(1e6),
-        # "min2wild_250x": int(1e6),
+        "base": int(1e9),
+        "golden_case": int(1e9),
+        "extra_chance_3x": int(1e9),
+        "extra_chance_5x": int(1e9),
+        "min2wild_200x": int(1e9),
+        "min2wild_250x": int(1e9),
     }
 
     run_conditions = {
