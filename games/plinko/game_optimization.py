@@ -1,6 +1,6 @@
 """Plinko optimization setup for the Rust weight-tuning algorithm.
 
-Generates optimization parameters for all 27 BetModes (9 rows x 3 risks).
+Generates optimization parameters for all 15 BetModes (5 rows x 3 risks).
 Each mode has a single "basegame" condition — every spin returns a payout,
 so hit-rate is 1 (100%) and the full RTP sits in "basegame".
 """

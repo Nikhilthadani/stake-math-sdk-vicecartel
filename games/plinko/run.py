@@ -12,6 +12,13 @@ Outputs go to games/plinko/library/:
     publish_files/      Final files ready for Stake Engine upload
 """
 
+import os
+import sys
+
+sdk_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+sys.path.insert(0, sdk_root)
+sys.path.insert(0, os.path.join(sdk_root, "games", "plinko"))
+
 from math import comb
 
 from gamestate import GameState
@@ -25,7 +32,7 @@ from optimization_program.run_script import OptimizationExecution
 # ─── Simulation settings ─────────────────────────────────────────────────────
 # Start small (100) for testing. Use 100_000+ for production.
 
-NUM_SIMS = 10000000
+NUM_SIMS = 1000000
 NUM_THREADS = 10
 BATCHING_SIZE = 50000
 COMPRESSION = True
@@ -68,7 +75,7 @@ if __name__ == "__main__":
     # Show analytical RTP before simulation
     print_rtp_table()
 
-    # Build sim args for all 27 modes
+    # Build sim args for all 15 modes
     num_sim_args = {}
     for rows in ROWS:
         for risk in RISKS:

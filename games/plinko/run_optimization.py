@@ -48,5 +48,5 @@ if __name__ == "__main__":
     if failed:
         print(f"\n{len(failed)} modes failed: {failed}")
     else:
-        print("\nAll 27 modes optimized successfully.")
+        print("\nAll modes optimized successfully.")
     print("\nOptimization complete.")
