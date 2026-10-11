@@ -28,10 +28,13 @@ WHEEL_BLUE_WEIGHT = 40
 WHEEL_YELLOW_WEIGHT = 25
 RED_DOUBLE_WILD_PROB = 0.10
 
-# Trigger P = (0.963 × cost − 0.4058 base-only RTP) / 548.1x EV per mystery check (spins-only bonuses)
-MYSTERY_TRIGGER_PROB = 0.001017               # 1-in-983
-MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004531      # 1-in-221, 3x cost
-MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008045      # 1-in-124, 5x cost
+# Trigger P = (0.963 × cost − BASE_ONLY_RTP) / 548.1x EV per mystery check (spins-only bonuses).
+# Bonus books are simulated as forced triggers; the optimizer weights them to this frequency.
+BASE_ONLY_RTP = 0.3924                        # base-game RTP excluding bonuses, per 1x bet: 0.4058 exact − 0.0134 lost to 0.1x flooring
+BASE_HIT_RATE = 3.44                          # 1-in-N spins with a non-zero base-game win after 0.1x flooring (measured)
+MYSTERY_TRIGGER_PROB = 0.001041               # 1-in-961
+MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004555      # 1-in-220, 3x cost
+MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008069      # 1-in-124, 5x cost
 MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
     "normal_bonus": 40, "super_bonus": 20, "hidden_bonus": 5,
     "super_hidden_bonus": 1, "no_bonus": 34,
@@ -136,6 +139,14 @@ class GameConfig(Config):
             "force_wincap": False,
             "force_freegame": False,
         }
+        bonus_conditions = {**base_conditions, "force_freegame": True}
+
+        # Mystery-trigger modes: split books so the optimizer keeps each part at its natural frequency
+        feature_distributions = [
+            Distribution(criteria="freegame", quota=0.1, conditions=bonus_conditions),
+            Distribution(criteria="0", quota=0.4, win_criteria=0.0, conditions=base_conditions),
+            Distribution(criteria="basegame", quota=0.5, conditions=base_conditions),
+        ]
 
         # ── Bet Modes ────────────────────────────────────────────
         self.bet_modes = [
@@ -147,9 +158,7 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=True,
                 is_buybonus=False,
-                distributions=[
-                    Distribution(criteria="basegame", quota=1.0, conditions=base_conditions),
-                ],
+                distributions=feature_distributions,
             ),
             BetMode(
                 name="golden_case",
@@ -171,9 +180,7 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=False,
                 is_buybonus=True,
-                distributions=[
-                    Distribution(criteria="basegame", quota=1.0, conditions=base_conditions),
-                ],
+                distributions=feature_distributions,
             ),
             BetMode(
                 name="extra_chance_5x",
@@ -183,9 +190,7 @@ class GameConfig(Config):
                 auto_close_disabled=False,
                 is_feature=False,
                 is_buybonus=True,
-                distributions=[
-                    Distribution(criteria="basegame", quota=1.0, conditions=base_conditions),
-                ],
+                distributions=feature_distributions,
             ),
             BetMode(
                 name="min2wild_200x",

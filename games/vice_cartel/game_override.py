@@ -15,6 +15,17 @@ class GameStateOverride(GameExecutables):
     def assign_special_sym_function(self):
         self.special_symbol_functions = {}
 
+    def evaluate_finalwin(self) -> None:
+        """RGS pays rounds in 0.1x steps: floor the round total, taking the excess from freegame first."""
+        wm = self.win_manager
+        excess = (round(wm.running_bet_win * 100) % 10) / 100
+        if excess > 0:
+            from_free = min(excess, wm.freegame_wins)
+            wm.freegame_wins = round(wm.freegame_wins - from_free, 2)
+            wm.basegame_wins = round(wm.basegame_wins - (excess - from_free), 2)
+            wm.running_bet_win = round(wm.running_bet_win - excess, 2)
+        super().evaluate_finalwin()
+
     def check_repeat(self):
         if self.repeat is False:
             win_criteria = self.get_current_betmode_distributions().get_win_criteria()

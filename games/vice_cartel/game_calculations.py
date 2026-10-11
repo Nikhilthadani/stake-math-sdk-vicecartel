@@ -7,8 +7,7 @@ from src.calculations.statistics import get_random_outcome
 from game_config import (
     WILD_MULTIPLIER_WEIGHTS, BLUE_INCREMENT_WEIGHTS, YELLOW_EXTRA_TURNS_WEIGHTS,
     WHEEL_TRIGGER_PROB, WHEEL_RED_WEIGHT, WHEEL_BLUE_WEIGHT,
-    WHEEL_YELLOW_WEIGHT, RED_DOUBLE_WILD_PROB, MYSTERY_TRIGGER_PROB,
-    MYSTERY_OUTCOME_WEIGHTS, PER_REEL_WILD_PROB, GOLDEN_CASE_LETTER_PROB,
+    WHEEL_YELLOW_WEIGHT, RED_DOUBLE_WILD_PROB, PER_REEL_WILD_PROB, GOLDEN_CASE_LETTER_PROB,
 )
 
 
@@ -44,12 +43,6 @@ class GameCalculations(Executables):
         if count >= 5:
             return scatter_pay.get(5, 0.0)
         return scatter_pay.get(count, 0.0)
-
-    @staticmethod
-    def mystery_check(trigger_prob: float = MYSTERY_TRIGGER_PROB) -> str | None:
-        if random.random() >= trigger_prob:
-            return None
-        return get_random_outcome(MYSTERY_OUTCOME_WEIGHTS)
 
     @staticmethod
     def wheel_triggers() -> bool:

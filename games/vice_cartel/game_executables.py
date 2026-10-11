@@ -2,12 +2,10 @@
 
 import random as _rng
 from game_calculations import GameCalculations
-from game_config import MYSTERY_TRIGGER_PROB, MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X
 from game_events import (
     reveal_event, wild_reel_event, spin_multiplier_event, scatter_pay_event,
-    mystery_trigger_event, wheel_spin_event, sticky_wild_update_event,
-    golden_case_reveal_event, win_info_event, set_win_event, set_total_event,
-    update_freespin_event, freespin_end_event, wincap_event,
+    wheel_spin_event, sticky_wild_update_event, golden_case_reveal_event,
+    win_info_event, set_win_event, set_total_event,
 )
 from src.calculations.lines import Lines
 
@@ -80,14 +78,6 @@ class GameExecutables(GameCalculations):
         if payout > 0:
             self.win_manager.update_spinwin(payout)
             scatter_pay_event(self, count, payout)
-
-    def check_mystery_trigger(self, trigger_prob: float | None = None) -> str | None:
-        prob = trigger_prob if trigger_prob is not None else MYSTERY_TRIGGER_PROB
-        outcome = self.mystery_check(prob)
-        if outcome and outcome != "no_bonus":
-            mystery_trigger_event(self, outcome)
-            self.record({"kind": "mystery", "outcome": outcome, "gametype": self.gametype})
-        return outcome
 
     def resolve_wheel(self, sticky_wilds: dict[int, int], turns_left: int) -> tuple[dict[int, int], int]:
         if not self.wheel_triggers():

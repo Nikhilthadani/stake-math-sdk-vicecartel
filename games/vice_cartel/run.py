@@ -1,5 +1,6 @@
 """Vice Cartel — simulation runner."""
 
+import os
 from gamestate import GameState
 from game_config import GameConfig
 from game_optimization import OptimizationSetup
@@ -28,11 +29,12 @@ if __name__ == "__main__":
 
     run_conditions = {
         "run_sims": True,
-        "run_optimization": False,
-        "run_analysis": False,
-        "run_format_checks": False,
+        "run_optimization": True,
+        "run_analysis": True,
+        "run_format_checks": True,
     }
-    target_modes = list(num_sim_args.keys())
+    # Golden Case and Min 2 Wild publish their natural books unweighted (raw RTP is already in band)
+    target_modes = ["base", "extra_chance_3x", "extra_chance_5x"]
 
     config = GameConfig()
     gamestate = GameState(config)
@@ -41,6 +43,12 @@ if __name__ == "__main__":
         optimization_setup_class = OptimizationSetup(config)
 
     if run_conditions["run_sims"]:
+        # A previous publish table would point at the old books, and the SDK never overwrites it
+        for mode in num_sim_args:
+            stale_lookup = gamestate.output_files.get_optimized_lookup_name(mode)
+            if os.path.exists(stale_lookup):
+                os.remove(stale_lookup)
+
         create_books(
             gamestate,
             config,

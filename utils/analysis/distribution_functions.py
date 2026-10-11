@@ -208,4 +208,6 @@ def min_dist_difference(dist: dict):
     for i in range(len(wins) - 2):
         if diff is None or (diff > abs(wins[i + 1]) - wins[i]):
             diff = abs(wins[i + 1]) - wins[i]
+    if diff is None:  # fewer than 3 distinct payouts (e.g. a 0-or-max-win mode)
+        diff = wins[-1] - wins[0] if len(wins) > 1 else 0
     return int(round(diff * 100))

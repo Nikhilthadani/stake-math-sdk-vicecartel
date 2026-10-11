@@ -1,18 +1,11 @@
 """Vice Cartel — main game state."""
 
 from game_override import GameStateOverride
-from game_config import (
-    MYSTERY_TRIGGER_PROB, MYSTERY_TRIGGER_PROB_EXTRA_3X, MYSTERY_TRIGGER_PROB_EXTRA_5X,
-    MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X,
-)
-from game_events import update_freespin_event, freespin_end_event
+from game_config import MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X, MYSTERY_OUTCOME_WEIGHTS
+from game_events import update_freespin_event, freespin_end_event, mystery_trigger_event
+from src.calculations.statistics import get_random_outcome
 
-# Mode → mystery trigger probability
-_TRIGGER_PROB_BY_MODE: dict[str, float] = {
-    "base": MYSTERY_TRIGGER_PROB,
-    "extra_chance_3x": MYSTERY_TRIGGER_PROB_EXTRA_3X,
-    "extra_chance_5x": MYSTERY_TRIGGER_PROB_EXTRA_5X,
-}
+_BONUS_TIER_WEIGHTS = {k: v for k, v in MYSTERY_OUTCOME_WEIGHTS.items() if k != "no_bonus"}
 
 # Mode → extra-wild probability for Min 2 Wild
 _MIN2WILD_EXTRA_PROB: dict[str, float] = {
@@ -49,17 +42,10 @@ class GameState(GameStateOverride):
             self.evaluate_scatter_pay()
             self.win_manager.update_gametype_wins(self.gametype)
 
-            conds = self.get_current_distribution_conditions()
-            if conds.get("force_freegame"):
-                outcome = self._forced_mystery_outcome()
+            # Bonuses live only in the "freegame" criteria; its frequency is set by the optimizer
+            if self.get_current_distribution_conditions().get("force_freegame"):
                 self.triggered_freegame = True
-                self.run_bonus(outcome)
-            else:
-                trigger_prob = _TRIGGER_PROB_BY_MODE.get(self.betmode, MYSTERY_TRIGGER_PROB)
-                outcome = self.check_mystery_trigger(trigger_prob)
-                if outcome and outcome != "no_bonus":
-                    self.triggered_freegame = True
-                    self.run_bonus(outcome)
+                self.run_bonus(self._forced_mystery_outcome())
 
             self.evaluate_finalwin()
             self.check_repeat()
@@ -86,11 +72,7 @@ class GameState(GameStateOverride):
         pass
 
     def _forced_mystery_outcome(self) -> str:
-        from src.calculations.statistics import get_random_outcome
-        from game_config import MYSTERY_OUTCOME_WEIGHTS
-        from game_events import mystery_trigger_event
-        tier_weights = {k: v for k, v in MYSTERY_OUTCOME_WEIGHTS.items() if k != "no_bonus"}
-        outcome = get_random_outcome(tier_weights)
+        outcome = get_random_outcome(_BONUS_TIER_WEIGHTS)
         mystery_trigger_event(self, outcome)
         self.record({"kind": "mystery", "outcome": outcome, "gametype": self.gametype})
         return outcome
