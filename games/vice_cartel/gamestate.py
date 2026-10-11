@@ -5,7 +5,7 @@ from game_config import (
     MYSTERY_TRIGGER_PROB, MYSTERY_TRIGGER_PROB_EXTRA_3X, MYSTERY_TRIGGER_PROB_EXTRA_5X,
     MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X,
 )
-from game_events import update_freespin_event, freespin_end_event, survival_life_event
+from game_events import update_freespin_event, freespin_end_event
 
 # Mode → mystery trigger probability
 _TRIGGER_PROB_BY_MODE: dict[str, float] = {
@@ -78,14 +78,7 @@ class GameState(GameStateOverride):
             sticky_wilds, turns_left = self.resolve_wheel(sticky_wilds, turns_left)
             self.run_bonus_spin(sticky_wilds)
             self.win_manager.update_gametype_wins(self.gametype)
-            if self.bonus_mode == "survival":
-                if self.is_dead_spin(len(sticky_wilds)):
-                    self.lives -= 1
-                    survival_life_event(self, self.lives, lost=True)
-                    if self.lives <= 0:
-                        break
-            else:
-                turns_left -= 1
+            turns_left -= 1
         freespin_end_event(self)
         self.gametype = self.config.basegame_type
 

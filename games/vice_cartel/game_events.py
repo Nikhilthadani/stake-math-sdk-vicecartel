@@ -36,14 +36,6 @@ def sticky_wild_update_event(gamestate, wild_reels: dict[int, int]) -> None:
     event = {"index": len(gamestate.book.events), "type": "stickyWildUpdate", "wildReels": {str(k): v for k, v in wild_reels.items()}}
     gamestate.book.add_event(event)
 
-def survival_life_event(gamestate, lives_remaining: int, lost: bool) -> None:
-    event = {"index": len(gamestate.book.events), "type": "survivalLife", "lives": lives_remaining, "lost": lost}
-    gamestate.book.add_event(event)
-
-def bonus_choice_event(gamestate, mode: str) -> None:
-    event = {"index": len(gamestate.book.events), "type": "bonusChoice", "mode": mode}
-    gamestate.book.add_event(event)
-
 def golden_case_reveal_event(gamestate, letters_landed: int, win: bool) -> None:
     event = {"index": len(gamestate.book.events), "type": "goldenCaseReveal", "lettersLanded": letters_landed, "maxWin": win}
     gamestate.book.add_event(event)

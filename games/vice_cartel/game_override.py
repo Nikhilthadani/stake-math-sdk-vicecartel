@@ -2,7 +2,6 @@
 
 import random
 from game_executables import GameExecutables
-from game_events import bonus_choice_event, survival_life_event
 
 
 class GameStateOverride(GameExecutables):
@@ -12,8 +11,6 @@ class GameStateOverride(GameExecutables):
         self.wild_reels: dict[int, int] = {}
         self.sticky_wilds: dict[int, int] = {}
         self.bonus_tier: str | None = None
-        self.bonus_mode: str | None = None
-        self.lives = 0
 
     def assign_special_sym_function(self):
         self.special_symbol_functions = {}
@@ -32,10 +29,10 @@ class GameStateOverride(GameExecutables):
         self.check_current_repeat_count()
 
     TIER_CONFIG: dict[str, dict] = {
-        "normal_bonus":       {"spins": 10, "start_wilds": 0, "start_mult": 1, "has_choice": False},
-        "super_bonus":        {"spins": 10, "start_wilds": 1, "start_mult": 2, "has_choice": False},
-        "hidden_bonus":       {"spins": 12, "start_wilds": 2, "start_mult": 3, "has_choice": True, "lives": 5},
-        "super_hidden_bonus": {"spins": 12, "start_wilds": 3, "start_mult": 5, "has_choice": True, "lives": 5},
+        "normal_bonus":       {"spins": 10, "start_wilds": 0, "start_mult": 1},
+        "super_bonus":        {"spins": 10, "start_wilds": 1, "start_mult": 2},
+        "hidden_bonus":       {"spins": 12, "start_wilds": 2, "start_mult": 3},
+        "super_hidden_bonus": {"spins": 12, "start_wilds": 3, "start_mult": 5},
     }
 
     def setup_bonus(self, tier: str) -> tuple[dict[int, int], int]:
@@ -46,12 +43,4 @@ class GameStateOverride(GameExecutables):
             positions = random.sample(range(self.config.num_reels), cfg["start_wilds"])
             for reel in positions:
                 sticky[reel] = cfg["start_mult"]
-        if cfg["has_choice"]:
-            self.bonus_mode = random.choice(["spins", "survival"])
-            bonus_choice_event(self, self.bonus_mode)
-            if self.bonus_mode == "survival":
-                self.lives = cfg["lives"]
-                return sticky, 999
-        else:
-            self.bonus_mode = "spins"
         return sticky, cfg["spins"]

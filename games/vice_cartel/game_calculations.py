@@ -6,7 +6,7 @@ from src.calculations.lines import Lines
 from src.calculations.statistics import get_random_outcome
 from game_config import (
     WILD_MULTIPLIER_WEIGHTS, BLUE_INCREMENT_WEIGHTS, YELLOW_EXTRA_TURNS_WEIGHTS,
-    SURVIVAL_DEAD_SPIN_PROB, WHEEL_TRIGGER_PROB, WHEEL_RED_WEIGHT, WHEEL_BLUE_WEIGHT,
+    WHEEL_TRIGGER_PROB, WHEEL_RED_WEIGHT, WHEEL_BLUE_WEIGHT,
     WHEEL_YELLOW_WEIGHT, RED_DOUBLE_WILD_PROB, MYSTERY_TRIGGER_PROB,
     MYSTERY_OUTCOME_WEIGHTS, PER_REEL_WILD_PROB, GOLDEN_CASE_LETTER_PROB,
 )
@@ -70,11 +70,6 @@ class GameCalculations(Executables):
     @staticmethod
     def yellow_extra_turns() -> int:
         return get_random_outcome(YELLOW_EXTRA_TURNS_WEIGHTS)
-
-    @staticmethod
-    def is_dead_spin(wild_count: int) -> bool:
-        prob = SURVIVAL_DEAD_SPIN_PROB.get(min(wild_count, 5), 0.0)
-        return random.random() < prob
 
     @staticmethod
     def golden_case_spin() -> tuple[int, bool]:

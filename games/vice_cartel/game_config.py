@@ -22,19 +22,15 @@ BLUE_INCREMENT_WEIGHTS: dict[int, float] = {
 
 YELLOW_EXTRA_TURNS_WEIGHTS: dict[int, float] = {1: 60, 2: 30, 3: 10}
 
-SURVIVAL_DEAD_SPIN_PROB: dict[int, float] = {
-    0: 0.92, 1: 0.83, 2: 0.70, 3: 0.52, 4: 0.30, 5: 0.0,
-}
-
 WHEEL_TRIGGER_PROB = 0.35
 WHEEL_RED_WEIGHT = 35
 WHEEL_BLUE_WEIGHT = 40
 WHEEL_YELLOW_WEIGHT = 25
 RED_DOUBLE_WILD_PROB = 0.10
 
-MYSTERY_TRIGGER_PROB = 0.00104304          # PAR v1.1: 1-in-959
-MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004640   # PAR v1.1 §7: 1-in-215, 4.45× uplift
-MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008238   # PAR v1.1 §7: 1-in-121, 7.90× uplift
+MYSTERY_TRIGGER_PROB = 0.001259357            # Recalibrated: 1-in-794 (spins-only, no survival)
+MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.005604      # 4.45× uplift of base trigger
+MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.009949      # 7.90× uplift of base trigger
 MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
     "normal_bonus": 40, "super_bonus": 20, "hidden_bonus": 5,
     "super_hidden_bonus": 1, "no_bonus": 34,

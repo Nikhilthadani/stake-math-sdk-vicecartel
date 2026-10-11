@@ -108,10 +108,7 @@ class GameExecutables(GameCalculations):
                 wheel_spin_event(self, "BLUE", {"reel": target, "increment": inc, "newMult": sticky_wilds[target]})
         elif segment == "YELLOW":
             extra = self.yellow_extra_turns()
-            if self.bonus_mode == "survival":
-                self.lives = min(self.lives + extra, 5)
-            else:
-                turns_left += extra
+            turns_left += extra
             wheel_spin_event(self, "YELLOW", {"extraTurns": extra})
         sticky_wild_update_event(self, sticky_wilds)
         return sticky_wilds, turns_left
