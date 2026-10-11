@@ -14,14 +14,14 @@ def _default_params():
     ).return_dict()
 
 
-def _single_criteria_mode(rtp, hr):
-    """Build opt_params for a mode with a single 'basegame' criteria."""
+def _single_criteria_mode(criteria, rtp):
+    """Pin a single-criteria mode to the target RTP, keeping its natural hit rate."""
     return {
         "conditions": {
-            "basegame": ConstructConditions(rtp=rtp, hr=hr).return_dict(),
+            criteria: ConstructConditions(rtp=rtp, hr="x").return_dict(),
         },
         "scaling": ConstructScaling([
-            {"criteria": "basegame", "scale_factor": 1, "win_range": (1, 1), "probability": 1.0},
+            {"criteria": criteria, "scale_factor": 1, "win_range": (1, 1), "probability": 1.0},
         ]).return_dict(),
         "parameters": _default_params(),
     }
@@ -31,21 +31,14 @@ class OptimizationSetup:
 
     def __init__(self, game_config):
         self.game_config = game_config
+        rtp = game_config.rtp
         self.game_config.opt_params = {
-            "base":             _single_criteria_mode(rtp=0.96, hr=1.92),
-            "golden_case":      {
-                "conditions": {
-                    "golden_case": ConstructConditions(rtp=0.96, hr=26.0).return_dict(),
-                },
-                "scaling": ConstructScaling([
-                    {"criteria": "golden_case", "scale_factor": 1, "win_range": (1, 1), "probability": 1.0},
-                ]).return_dict(),
-                "parameters": _default_params(),
-            },
-            "extra_chance_3x":  _single_criteria_mode(rtp=0.96, hr=1.92),
-            "extra_chance_5x":  _single_criteria_mode(rtp=0.96, hr=1.92),
-            "min2wild_200x":    _single_criteria_mode(rtp=0.96, hr=1.13),
-            "min2wild_250x":    _single_criteria_mode(rtp=0.96, hr=1.13),
+            "base":            _single_criteria_mode("basegame", rtp),
+            "golden_case":     _single_criteria_mode("golden_case", rtp),
+            "extra_chance_3x": _single_criteria_mode("basegame", rtp),
+            "extra_chance_5x": _single_criteria_mode("basegame", rtp),
+            "min2wild_200x":   _single_criteria_mode("basegame", rtp),
+            "min2wild_250x":   _single_criteria_mode("basegame", rtp),
         }
 
         verify_optimization_input(self.game_config, self.game_config.opt_params)

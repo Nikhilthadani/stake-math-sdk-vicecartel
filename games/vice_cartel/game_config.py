@@ -28,9 +28,10 @@ WHEEL_BLUE_WEIGHT = 40
 WHEEL_YELLOW_WEIGHT = 25
 RED_DOUBLE_WILD_PROB = 0.10
 
-MYSTERY_TRIGGER_PROB = 0.001259357            # Recalibrated: 1-in-794 (spins-only, no survival)
-MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.005604      # 4.45× uplift of base trigger
-MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.009949      # 7.90× uplift of base trigger
+# Trigger P = (0.963 × cost − 0.4058 base-only RTP) / 548.1x EV per mystery check (spins-only bonuses)
+MYSTERY_TRIGGER_PROB = 0.001017               # 1-in-983
+MYSTERY_TRIGGER_PROB_EXTRA_3X = 0.004531      # 1-in-221, 3x cost
+MYSTERY_TRIGGER_PROB_EXTRA_5X = 0.008045      # 1-in-124, 5x cost
 MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
     "normal_bonus": 40, "super_bonus": 20, "hidden_bonus": 5,
     "super_hidden_bonus": 1, "no_bonus": 34,
@@ -38,10 +39,10 @@ MYSTERY_OUTCOME_WEIGHTS: dict[str, float] = {
 
 PER_REEL_WILD_PROB = 0.045
 
-GOLDEN_CASE_LETTER_PROB = 0.291367  # PAR §5: per-letter q (before "at least 1" guarantee)
+GOLDEN_CASE_LETTER_PROB = 0.291759  # PAR §5: per-letter q (before "at least 1" guarantee), exact 96.30% RTP
 
-MIN2WILD_EXTRA_PROB_200X = 0.396    # PAR §8: extra-wild P for 200x price
-MIN2WILD_EXTRA_PROB_250X = 0.438    # PAR §8: extra-wild P for 250x price
+MIN2WILD_EXTRA_PROB_200X = 0.3976   # PAR §8, solved from exact EV for 96.35% at 200x
+MIN2WILD_EXTRA_PROB_250X = 0.4412   # PAR §8, solved from exact EV for 96.35% at 250x
 
 
 class GameConfig(Config):
@@ -63,7 +64,7 @@ class GameConfig(Config):
         self.working_name = "Vice Cartel"
         self.wincap = 25000.0
         self.win_type = "lines"
-        self.rtp = 0.9600
+        self.rtp = 0.9630
         self.construct_paths()
 
         # ── Grid ─────────────────────────────────────────────────
@@ -72,6 +73,8 @@ class GameConfig(Config):
 
         # ── Paytable (PAR §1.3) — (kind, symbol): payout ────────
         self.paytable = {
+            # Wild substitutes; only a 5-Wild line has no symbol to substitute for and pays as H1
+            (5, "W"):  6.0,
             (5, "H1"): 6.0,   (4, "H1"): 2.0,   (3, "H1"): 0.5,
             (5, "H2"): 4.0,   (4, "H2"): 1.2,   (3, "H2"): 0.35,
             (5, "H3"): 2.5,   (4, "H3"): 0.8,   (3, "H3"): 0.25,
@@ -115,7 +118,7 @@ class GameConfig(Config):
             self.freegame_type: 0,
         }
 
-        # ── Reels (PAR Reelsets — 200 stops, 5 columns) ─────────
+        # ── Reels (PAR table 1.1 — 191 W-free stops, 5 columns) ─
         self.reels = {
             "BR0": self.read_reels_csv(os.path.join(self.reels_path, "BR0.csv")),
         }
@@ -132,11 +135,6 @@ class GameConfig(Config):
             "reel_weights": _reel_weights_both,
             "force_wincap": False,
             "force_freegame": False,
-        }
-        bonus_conditions = {
-            "reel_weights": _reel_weights_both,
-            "force_wincap": False,
-            "force_freegame": True,
         }
 
         # ── Bet Modes ────────────────────────────────────────────
