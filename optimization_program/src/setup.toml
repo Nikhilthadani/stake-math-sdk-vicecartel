@@ -11,6 +11,6 @@ max_trial_dist = 15
 game_name = "vice_cartel"
 path_to_games = "../games/"
 run_1000_batch = false
-bet_type = "base"
+bet_type = "extra_chance_5x"
 threads_for_fence_construction = 20
 threads_for_show_construction = 20
