@@ -15,13 +15,13 @@ import zstandard as zstd
 
 SDK_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, SDK_ROOT)
+sys.path.insert(0, os.path.join(SDK_ROOT, "games", "plinko"))
+
+from game_config import MODES
 
 BOOKS_DIR = os.path.join(SDK_ROOT, "games", "plinko", "library", "books")
 COMPRESSED_DIR = os.path.join(SDK_ROOT, "games", "plinko", "library", "books_compressed")
 PUBLISH_DIR = os.path.join(SDK_ROOT, "games", "plinko", "library", "publish_files")
-
-ROWS = [8, 10, 12, 14, 16]
-RISKS = ["low", "medium", "high"]
 
 
 def stream_json_array(filepath):
@@ -119,12 +119,7 @@ if __name__ == "__main__":
     print(f"  Publish:     {PUBLISH_DIR}")
     print()
 
-    ok = 0
-    for rows in ROWS:
-        for risk in RISKS:
-            mode = f"{rows}_{risk}"
-            if compress_book(mode):
-                ok += 1
+    ok = sum(compress_book(mode) for mode in MODES)
 
-    print(f"\nDone. {ok}/15 books compressed.")
+    print(f"\nDone. {ok}/{len(MODES)} books compressed.")
     print("Files ready in: games/plinko/library/publish_files/")

@@ -14,7 +14,7 @@ sdk_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, sdk_root)
 sys.path.insert(0, os.path.join(sdk_root, "games", "plinko"))
 
-from game_config import GameConfig, ROWS, RISKS
+from game_config import GameConfig, MODES
 from gamestate import GameState
 from game_optimization import OptimizationSetup
 from src.write_data.write_configs import generate_configs
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     OptimizationSetup(config)
     generate_configs(gamestate)
 
-    modes = [f"{rows}_{risk}" for rows in ROWS for risk in RISKS]
+    modes = list(MODES)
     print(f"Running Rust optimization for {len(modes)} modes...")
 
     failed = []

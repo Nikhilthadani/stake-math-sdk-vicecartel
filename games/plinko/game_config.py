@@ -1,10 +1,11 @@
 """Plinko game configuration for Stake Engine.
 
 Ports the base-game multiplier tables from engine-plinko.
-Each (rows, risk) combination becomes a separate BetMode.
+Each (rows, risk) combination becomes a separate BetMode, plus one
+"wheel" buy mode per row count (20 modes total).
 """
 
-from math import comb
+from math import comb, sqrt
 from src.config.config import Config, BetMode
 from src.config.distributions import Distribution
 
@@ -48,27 +49,118 @@ BASE_MULTIPLIERS = {
 }
 
 
-# ─── Analytical RTP helper ────────────────────────────────────────────────────
+# ─── Wheel buy feature ────────────────────────────────────────────────────────
+# Landing in a wheel slot spins the wheel; payout = slot multiplier × wheel value.
+# Wheel: 20 equal segments, value -> segment count (E = 2.05).
 
-def analytical_rtp(rows, multipliers):
-    """Exact expected return for fair 50/50 Plinko.
+WHEEL = {1: 13, 2: 4, 5: 2, 10: 1}
+WHEEL_SEGMENTS = [1, 2, 1, 5, 1, 1, 2, 1, 1, 10, 1, 2, 1, 1, 5, 1, 2, 1, 1, 1]
+WHEEL_COST = 1.3
+WHEEL_RISK = "medium"
 
-    Each peg is an independent coin flip, so the probability of landing
-    in slot k (= k rightward bounces out of `rows` total) is the
-    binomial coefficient C(rows, k) / 2^rows.
-    """
-    ev = sum(comb(rows, k) * multipliers[k] for k in range(rows + 1))
-    return ev / (2 ** rows)
+# Medium tables re-tuned so each mode returns exactly 96.10% of WHEEL_COST.
+WHEEL_TABLES = {
+    8: {
+        "multipliers": [12.78, 2.93, 1.25, 0.69, 0.38, 0.69, 1.25, 2.93, 12.78],
+        "wheel_slots": (2, 6),
+    },
+    10: {
+        "multipliers": [22.07, 4.84, 1.94, 1.5, 0.59, 0.38, 0.59, 1.5, 1.94, 4.84, 22.07],
+        "wheel_slots": (4, 6),
+    },
+    12: {
+        "multipliers": [32.02, 10.67, 4.42, 1.95, 1.07, 0.59, 0.27, 0.59, 1.07, 1.95, 4.42, 10.67, 32.02],
+        "wheel_slots": (4, 8),
+    },
+    14: {
+        "multipliers": [56.66, 14.56, 6.58, 3.88, 1.84, 0.97, 0.49, 0.19, 0.49, 0.97, 1.84, 3.88, 6.58, 14.56, 56.66],
+        "wheel_slots": (5, 7, 9),
+    },
+    16: {
+        "multipliers": [109.56, 39.79, 9.69, 7.18, 2.9, 1.45, 0.97, 0.49, 0.29, 0.49, 0.97, 1.45, 2.9, 7.18, 9.69, 39.79, 109.56],
+        "wheel_slots": (6, 10),
+    },
+}
+
+assert sorted(WHEEL_SEGMENTS) == sorted(v for v, n in WHEEL.items() for _ in range(n))
+
+
+# ─── Mode registry ────────────────────────────────────────────────────────────
+
+def build_modes():
+    """Return {mode_name: spec} for every base and wheel mode."""
+    modes = {}
+    for rows in ROWS:
+        for risk in RISKS:
+            modes[f"{rows}_{risk}"] = {
+                "rows": rows,
+                "risk": risk,
+                "multipliers": BASE_MULTIPLIERS[rows][risk],
+                "wheel_slots": (),
+                "cost": 1.0,
+            }
+    for rows in ROWS:
+        modes[f"{rows}_wheel"] = {
+            "rows": rows,
+            "risk": WHEEL_RISK,
+            **WHEEL_TABLES[rows],
+            "cost": WHEEL_COST,
+        }
+    return modes
+
+
+MODES = build_modes()
+
+
+# ─── Analytical math ──────────────────────────────────────────────────────────
+# Slot k (k rightward bounces) has probability C(rows, k) / 2^rows.
+# A wheel slot pays m * W, so its moments are m * E[W] and m^2 * E[W^2].
+
+def _wheel_moment(power):
+    return sum(v ** power * n for v, n in WHEEL.items()) / sum(WHEEL.values())
+
+
+def _payout_moment(spec, power):
+    rows, mults, wheel_slots = spec["rows"], spec["multipliers"], spec["wheel_slots"]
+    wheel = _wheel_moment(power)
+    total = sum(
+        comb(rows, k) * mults[k] ** power * (wheel if k in wheel_slots else 1)
+        for k in range(rows + 1)
+    )
+    return total / 2 ** rows
+
+
+def analytical_rtp(mode):
+    """Exact expected return per unit of mode cost."""
+    spec = MODES[mode]
+    return _payout_moment(spec, 1) / spec["cost"]
+
+
+def analytical_sigma(mode):
+    """Exact payout standard deviation per unit of mode cost."""
+    spec = MODES[mode]
+    variance = _payout_moment(spec, 2) - _payout_moment(spec, 1) ** 2
+    return sqrt(max(variance, 0)) / spec["cost"]
+
+
+def max_payout(mode):
+    """Largest possible payout multiplier (wheel included)."""
+    spec = MODES[mode]
+    top_wheel = max(WHEEL)
+    return max(
+        m * (top_wheel if k in spec["wheel_slots"] else 1)
+        for k, m in enumerate(spec["multipliers"])
+    )
 
 
 # ─── Game configuration ──────────────────────────────────────────────────────
 
 class GameConfig(Config):
-    """Plinko base-game configuration.
+    """Plinko configuration.
 
-    Creates one BetMode per (rows, risk) combination = 15 modes total.
-    Rows: 8, 10, 12, 14, 16  ×  Risks: low, medium, high.
-    No reels, no symbols, no free spins — pure Plinko.
+    20 BetModes: 15 base modes (5 rows × 3 risks, cost 1) and
+    5 wheel buy modes (one per row count, cost WHEEL_COST).
+    No reels, no symbols, no free spins.
     """
 
     def __init__(self):
@@ -82,7 +174,7 @@ class GameConfig(Config):
         self.working_name = "plinko"
         self.win_type = "other"
         self.rtp = 0.961
-        self.wincap = 970.95
+        self.wincap = max(max_payout(name) for name in MODES)
         self.construct_paths()
 
         # Plinko has no reels, symbols, or paylines
@@ -95,41 +187,29 @@ class GameConfig(Config):
         self.anticipation_triggers = {self.basegame_type: 0, self.freegame_type: 0}
 
         # Per-mode config lookup (used by gamestate.run_spin)
-        self.plinko = {}
-        self.bet_modes = []
+        self.plinko = MODES
+        self.wheel_segments = WHEEL_SEGMENTS
 
-        for rows in ROWS:
-            for risk in RISKS:
-                name = f"{rows}_{risk}"
-                mults = BASE_MULTIPLIERS[rows][risk]
-                max_mult = max(mults)
-                rtp = analytical_rtp(rows, mults)
-
-                self.plinko[name] = {
-                    "rows": rows,
-                    "risk": risk,
-                    "multipliers": mults,
-                }
-
-                self.bet_modes.append(
-                    BetMode(
-                        name=name,
-                        cost=1.0,
-                        rtp=min(rtp, 0.9999),
-                        max_win=max_mult,
-                        auto_close_disabled=False,
-                        is_feature=True,
-                        is_buybonus=False,
-                        distributions=[
-                            Distribution(
-                                criteria="basegame",
-                                quota=1.0,
-                                conditions={
-                                    "reel_weights": {},
-                                    "force_wincap": False,
-                                    "force_freegame": False,
-                                },
-                            ),
-                        ],
-                    )
-                )
+        self.bet_modes = [
+            BetMode(
+                name=name,
+                cost=spec["cost"],
+                rtp=min(analytical_rtp(name), 0.9999),
+                max_win=max_payout(name),
+                auto_close_disabled=False,
+                is_feature=not spec["wheel_slots"],
+                is_buybonus=bool(spec["wheel_slots"]),
+                distributions=[
+                    Distribution(
+                        criteria="basegame",
+                        quota=1.0,
+                        conditions={
+                            "reel_weights": {},
+                            "force_wincap": False,
+                            "force_freegame": False,
+                        },
+                    ),
+                ],
+            )
+            for name, spec in MODES.items()
+        ]

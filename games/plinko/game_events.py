@@ -31,3 +31,24 @@ def plinko_result_event(gamestate, path, final_slot, rows, risk, multiplier):
         "totalWin": int(round(multiplier * 100, 0)),
     }
     gamestate.book.add_event(event)
+
+
+def wheel_spin_event(gamestate, final_slot, base_multiplier, segment, wheel_value, multiplier):
+    """Emit the wheel spin triggered by landing in a wheel slot.
+
+      - segment:        index into config wheel segments (where the wheel stops)
+      - wheelValue:     multiplier on that segment
+      - baseMultiplier: slot multiplier before the wheel
+      - multiplier:     final payout multiplier (base × wheel)
+    """
+    event = {
+        "index": len(gamestate.book.events),
+        "type": "wheelSpin",
+        "finalSlot": final_slot,
+        "segment": segment,
+        "wheelValue": wheel_value,
+        "baseMultiplier": base_multiplier,
+        "multiplier": multiplier,
+        "totalWin": int(round(multiplier * 100, 0)),
+    }
+    gamestate.book.add_event(event)
