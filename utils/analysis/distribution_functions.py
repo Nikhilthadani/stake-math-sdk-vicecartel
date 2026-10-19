@@ -203,9 +203,8 @@ def calculate_rtp(dist: dict, bet_cost: float, total_weight: float = None) -> fl
 
 def min_dist_difference(dist: dict):
     """Minimum payout amount difference"""
-    wins = list(dist.keys())
-    diff = None
-    for i in range(len(wins) - 2):
-        if diff is None or (diff > abs(wins[i + 1]) - wins[i]):
-            diff = abs(wins[i + 1]) - wins[i]
+    wins = sorted(dist.keys())
+    if len(wins) < 2:
+        return 0
+    diff = min(b - a for a, b in zip(wins, wins[1:]))
     return int(round(diff * 100))
