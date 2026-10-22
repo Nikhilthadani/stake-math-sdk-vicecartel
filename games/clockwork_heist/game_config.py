@@ -5,7 +5,9 @@ Ports engine-clockwork: every number comes from `game_config.json`, a copy of
 
 5 reels x 4 rows, 40 left-to-right paylines, wilds (WD) carry 2x/3x/5x
 multipliers that add up on a line, 3 scatters (SC) trigger 8 free spins.
-Modes: base (1x), bonus buy (100x), max win or nothing (1000x).
+Modes: base (1x), bonus buy (100x), max win or nothing (100x: the Sticky Wild
+Vault hold & respin; a full grid of Vault Keys pays 25,000x, otherwise the sum of
+the key multipliers, at least 20x).
 """
 
 import json
@@ -21,7 +23,14 @@ SCATTER = "SC"
 NUM_REELS = 5
 
 # engine reel set name -> SDK reel id
-REEL_IDS = {"base": "BR0", "free": "FR0", "buy": "BUY", "mwon": "MWON"}
+REEL_IDS = {"base": "BR0", "free": "FR0", "buy": "BUY"}
+
+# Share of mwon books that fill the grid (more distinct jackpot rounds); the lookup
+# weights, not this share, carry the jackpot probability (run.py `set_mwon_weights`)
+MWON_JACKPOT_BOOK_SHARE = 0.01
+
+# A Vault Key lands when `random() < p`; `p` is limited to the engine's integer draw scale
+MWON_PROBABILITY_DECIMALS = 9
 
 
 def load_engine_config(path: str = GAME_CONFIG_PATH) -> dict:
@@ -49,7 +58,7 @@ class GameConfig(Config):
         self.game_name = "clockwork_heist"
         self.working_name = raw["game"]
         self.win_type = "lines"
-        # Published RTP of base and bonus (lookup weights are tilted onto it by run.py); band is 96.0-96.7%
+        # Published RTP of every mode (lookup weights are tilted onto it by run.py); band is 96.0-96.7%
         self.rtp = 0.9635
         self.wincap = float(raw["max_win"])
         self.construct_paths()
@@ -94,10 +103,12 @@ class GameConfig(Config):
         mwon = raw["max_win_or_nothing"]
         self.max_win_or_nothing = {
             "price": float(mwon["price"]),
+            "start_keys": mwon["start_keys"],
+            "respins": mwon["respins"],
+            "land_probability": mwon["land_probability"],
+            "mult_weights": {int(value): weight for value, weight in mwon["mult_weights"].items()},
+            "min_award": float(mwon["min_award"]),
             "win_amount": float(mwon["win_amount"]),
-            "win_probability": mwon["win_probability"],
-            "require_near_miss_on_loss": mwon["require_near_miss_on_loss"],
-            "presentation_samples": mwon["presentation_samples"],
         }
 
         # Reels: strips have different lengths per reel, so they load from JSON, not CSV
@@ -135,7 +146,13 @@ class GameConfig(Config):
         self.validate_buy_reels(rows)
 
         assert self.free_spins["min_award"] <= self.wincap, "free_spins.min_award exceeds max_win"
-        assert self.max_win_or_nothing["win_amount"] <= self.wincap, "max_win_or_nothing.win_amount exceeds max_win"
+        mwon = self.max_win_or_nothing
+        assert mwon["win_amount"] <= self.wincap, "max_win_or_nothing.win_amount exceeds max_win"
+        assert mwon["start_keys"] < self.num_reels * rows, "max_win_or_nothing.start_keys must leave at least one empty cell"
+        p = mwon["land_probability"]
+        assert 0 < p < 1 and round(p, MWON_PROBABILITY_DECIMALS) == p, (
+            f"max_win_or_nothing.land_probability needs 0 < p < 1 and at most {MWON_PROBABILITY_DECIMALS} decimals"
+        )
 
     def validate_buy_reels(self, rows: int) -> None:
         """Every BUY screen must trigger and pay nothing (engine `playBuyRound` guard, proven for all stops).
@@ -176,14 +193,6 @@ class GameConfig(Config):
         buy_freegame = {"reel_weights": buy_reels, "mult_values": mult_values, "scatter_triggers": trigger,
                         "force_wincap": False, "force_freegame": True}
 
-        mwon_reels = {self.basegame_type: {"MWON": 1}}
-        mwon_win = {"reel_weights": mwon_reels, "mult_values": mult_values,
-                    "force_wincap": True, "force_freegame": False}
-        mwon_lose = {"reel_weights": mwon_reels, "mult_values": mult_values,
-                     "force_wincap": False, "force_freegame": False}
-        p_win = self.max_win_or_nothing["win_probability"]
-        mwon_rtp = round(p_win * self.max_win_or_nothing["win_amount"] / self.max_win_or_nothing["price"], 10)
-
         return [
             BetMode(
                 name="base",
@@ -214,19 +223,27 @@ class GameConfig(Config):
             BetMode(
                 name="mwon",
                 cost=self.max_win_or_nothing["price"],
-                rtp=mwon_rtp,
+                rtp=self.rtp,
                 max_win=self.wincap,
                 auto_close_disabled=False,
                 is_feature=False,
                 is_buybonus=True,
+                # The vault grid draws no reels (no `reel_weights`): keys come from max_win_or_nothing.
+                # `wincap` = full grid; `basegame` = every other round (a full grid there is played again).
                 distributions=[
                     Distribution(
                         criteria="wincap",
-                        quota=p_win,
+                        quota=MWON_JACKPOT_BOOK_SHARE,
                         win_criteria=self.max_win_or_nothing["win_amount"],
-                        conditions=mwon_win,
+                        conditions={"force_wincap": True},
+                        required_distribution_conditions=[],
                     ),
-                    Distribution(criteria="0", quota=1 - p_win, win_criteria=0.0, conditions=mwon_lose),
+                    Distribution(
+                        criteria="basegame",
+                        quota=1 - MWON_JACKPOT_BOOK_SHARE,
+                        conditions={},
+                        required_distribution_conditions=[],
+                    ),
                 ],
             ),
         ]

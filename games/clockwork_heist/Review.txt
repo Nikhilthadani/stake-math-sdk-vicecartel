@@ -1,0 +1,101 @@
+Tail Probability (25,000x)
+0.0384
+/ 0.0020
+0.0384
+/ 0.0050
+What it is: How likely a single round is to pay 25,000x or more. Bet size and cost multiplier don't change it.
+
+How to fix: Make payouts of 25,000x or more happen less often in the distribution.
+
+Failing in 2 Star: mwon
+
+Failing in 3 Star: mwon
+
+
+
+---
+
+Tail Probability (5,000x)
+0.0384
+/ 0.0100
+0.0384
+/ 0.0500
+What it is: How likely a single round is to pay 5,000x or more. Bet size and cost multiplier don't change it.
+
+How to fix: Make payouts of 5,000x or more happen less often in the distribution.
+
+Failing in 2 Star: mwon
+
+
+---
+Tail Probability (10,000x)
+0.0384
+/ 0.0050
+0.0384
+/ 0.0100
+What it is: How likely a single round is to pay 10,000x or more. Bet size and cost multiplier don't change it.
+
+How to fix: Make payouts of 10,000x or more happen less often in the distribution.
+
+Failing in 2 Star: mwon
+
+Failing in 3 Star: mwon
+
+---
+
+Risk Limit (CVaR, absolute)
+25000.0
+/ 20000.0
+25000.0
+/ 50000.0
+What it is: The same worst-0.1% expected payout, but in raw base-bet multiples (not divided by cost). It bounds absolute operator liability, so a high-cost mode can't hide a large tail behind its stake.
+
+How to fix: Lower the size of the most extreme wins.
+
+Failing in 2 Star: mwon
+
+---
+
+Expected Tail Liability (10,000x)
+0.960
+/ 0.600
+0.960
+/ 0.800
+What it is: The cumulative RTP share that comes from wins above 10,000x.
+
+How to fix: Move RTP away from the biggest wins (above 10,000x) toward smaller ones.
+
+Failing in 2 Star: mwon
+
+Failing in 3 Star: mwon
+
+
+
+
+---FINAL
+
+2 Star — Caps Reduced
+3 failing checks
+Max Exposure
+Reduced to 5,000,000
+From 15,000,000
+Max Bet Cost
+Reduced to 50,000
+From 100,000
+Due to:
+Risk Limit (CVaR)
+Expected Tail Liability
+Tail Probability
+3 Star — Caps Reduced
+2 failing checks
+Max Exposure
+Reduced to 15,000,000
+From 50,000,000
+Max Bet Cost
+Reduced to 250,000
+From 500,000
+Due to:
+Expected Tail Liability
+Tail Probability
+
+

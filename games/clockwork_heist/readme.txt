@@ -2,7 +2,8 @@
 
 Stake Engine port of engine-clockwork (RTPDeck RGS). Same math: every number comes from
 game_config.json, a copy of engine-clockwork/src/config/game_config.json (keep them identical).
-Reference figures: Slot_Game_PAR_Sheet.xlsx.
+Reference figures: Slot_Game_PAR_Sheet.xlsx (base, bonus) and mathsV2/Slot_Game_PAR_Sheet_V2.xlsx
+tab "MWoN v2" (mwon; exact model mathsV2/mwon_v2_model.py).
 
 5 reels x 4 rows, 40 left-to-right paylines, pays in multiples of total bet, max win 25,000x.
 
@@ -21,25 +22,34 @@ Free spins (free reels, no scatters, no retrigger):
 Modes:
   base   1x     natural game
   bonus  100x   Bonus Buy: buy reels always show 3 scatters and never pay, then a normal session
-  mwon   1000x  Max Win or Nothing: wins 25,000x with probability 0.0384 (96.00% RTP), shown as a
-                5-of-a-kind line; a loss shows a 4-of-a-kind near miss and pays nothing
+  mwon   100x   Max Win or Nothing, Sticky Wild Vault (hold & respin) on the 5 x 4 grid, no reels:
+                5 Vault Keys (WD) with multipliers 1/2/3/5/10/25/50/100x start on random cells.
+                Each respin every empty cell lands a key with p = 0.049132085; keys stick. 3 respins,
+                reset by any new key. Full grid (1 in 1,400): flat 25,000x. Otherwise the sum of
+                all key multipliers, at least 20x. RTP 96.35% theoretical.
 
 25,000x is unreachable in base and bonus (PAR "Assumptions & Gaps" G-01), so those modes have no
-wincap criteria. mwon lookup weights are set exactly by run.py, never by the optimizer.
+wincap criteria. mwon lookup weights are set exactly by run.py, never by the optimizer: full-grid
+books (criteria wincap) get exactly the Markov-chain P(full grid) = 1 / 1,400, the other books
+(basegame) are tilted so the mode RTP is 96.35%. Stake checks (MathApproval.md): mwon passes
+every 2-Star and 3-Star check (worst 0.1% mean 17,983 vs 20,000; big-win shares 0.18).
 
 Files:
-  game_config.py        config + load-time guards (strip counts, wild-free reel 1, buy reels)
-  gamestate.py          round flow: base / bonus / mwon, free-spins session
-  game_calculations.py  sticky wilds, Gold Meter, min award, mwon screen sampling
+  game_config.py        config + load-time guards (strip counts, wild-free reel 1, buy reels,
+                        vault rules)
+  gamestate.py          round flow: base / bonus / mwon (vault hold & respin), free-spins session
+  game_calculations.py  sticky wilds, Gold Meter, min award, mwon vault cells and keys
   game_executables.py   line evaluation and win events (no padding rows)
   game_override.py      wild multipliers, repeat rules, fast event copy, round total paid rounded
                         down to 0.1x (Stake payout step; engine-clockwork pays the 0.05x steps exactly)
-  game_events.py        goldMeter, freeSpinMinAward, mwonResult events
+  game_events.py        goldMeter, freeSpinMinAward, vaultStart, vaultRespin, vaultEnd
   run.py                book generation, configs, lookup weights: natural base odds, base and bonus
                         tilted onto GameConfig.rtp (96.35%), exact mwon weights
   check_parity.py       natural-play parity check against the PAR sheet
   FRONTEND_EVENTS.md    book/event format for the frontend (example_books.json: real books)
 
 Commands (from the SDK root):
-  python games/clockwork_heist/check_parity.py         # 10M base, 1M bonus, 200k mwon vs PAR
+  python games/clockwork_heist/check_parity.py         # 10M base, 1M bonus, 1M mwon vs PAR
   python games/clockwork_heist/run.py                  # books + lookup tables + publish_files
+  .\env\Scripts\python.exe -c "import sys; sys.argv=['run.py']; sys.path.insert(0, 'games/clockwork_heist'); import run; run.main({'mwon': 1000000})"
+                                                       # mwon only (1M books, ~6 min); base and bonus files untouched

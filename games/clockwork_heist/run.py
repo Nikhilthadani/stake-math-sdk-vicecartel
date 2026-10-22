@@ -76,49 +76,52 @@ def set_base_weights(gamestate) -> None:
     (10x minimum), so P(basegame) is the PAR hit rate minus it and `0` takes the rest. Books of
     one criteria share one weight; weights sum to about BASE_WEIGHT_TOTAL.
     """
-    paths = gamestate.output_files.lookups[BASE_MODE]["paths"]
-    with open(paths["segmented_id"], "r", encoding="UTF-8") as file:
-        criteria = {int(r[0]): r[1] for r in csv.reader(file) if r}
-    with open(paths["optimized_lookup"], "r", encoding="UTF-8") as file:
-        rows = [(int(r[0]), int(r[2])) for r in csv.reader(file) if r]
+    path = gamestate.output_files.lookups[BASE_MODE]["paths"]["optimized_lookup"]
+    criteria = read_criteria(gamestate, BASE_MODE)
+    rows = read_lookup(path)
 
     p_trigger = trigger_probability(gamestate.config)
     p_hit = Fraction(str(PAR["base"]["hit_rate"]))
     odds = {"freegame": p_trigger, "basegame": p_hit - p_trigger, "0": 1 - p_hit}
     counts = {name: 0 for name in odds}
-    for book_id, _ in rows:
+    for book_id, _, _ in rows:
         counts[criteria[book_id]] += 1
     if not all(counts.values()):
         raise RuntimeError(f"base needs books of every criteria, got {counts}")
 
     weights = {name: round(p * BASE_WEIGHT_TOTAL / counts[name]) for name, p in odds.items()}
-    with open(paths["optimized_lookup"], "w", encoding="UTF-8", newline="") as file:
-        writer = csv.writer(file, lineterminator="\n")
-        for book_id, payout in rows:
-            writer.writerow([book_id, weights[criteria[book_id]], payout])
+    write_lookup(path, [(book_id, weights[criteria[book_id]], payout) for book_id, _, payout in rows])
 
 
-def tilt_weights(gamestate, mode: str) -> float:
-    """Reweights a mode's lookup table onto its BetMode RTP with the smallest change in distribution.
+def get_bet_mode(gamestate, mode: str):
+    return next(bm for bm in gamestate.config.bet_modes if bm.get_name() == mode)
 
-    Every book's weight w becomes w * exp(theta * win) (exponential tilting: the minimum-KL
-    reweighting with that mean), with theta solved so the weighted RTP equals the target.
-    Hit rates and the shape of the win distribution stay close to the books' natural odds.
-    Returns theta.
-    """
-    bet_mode = next(bm for bm in gamestate.config.bet_modes if bm.get_name() == mode)
-    target = bet_mode.get_rtp() * bet_mode.get_cost() * 100
-    path = gamestate.output_files.lookups[mode]["paths"]["optimized_lookup"]
+
+def read_lookup(path: str) -> list:
     with open(path, "r", encoding="UTF-8") as file:
-        rows = [(int(r[0]), int(r[1]), int(r[2])) for r in csv.reader(file) if r]
+        return [(int(r[0]), int(r[1]), int(r[2])) for r in csv.reader(file) if r]
 
+
+def write_lookup(path: str, rows) -> None:
+    with open(path, "w", encoding="UTF-8", newline="") as file:
+        writer = csv.writer(file, lineterminator="\n")
+        writer.writerows(rows)
+
+
+def read_criteria(gamestate, mode: str) -> dict:
+    with open(gamestate.output_files.lookups[mode]["paths"]["segmented_id"], "r", encoding="UTF-8") as file:
+        return {int(r[0]): r[1] for r in csv.reader(file) if r}
+
+
+def solve_tilt(rows, target: float, label: str) -> float:
+    """theta such that the (weight, payout) rows reweighted by exp(theta * payout) have mean payout `target`."""
     by_payout = {}
     for _, weight, payout in rows:
         by_payout[payout] = by_payout.get(payout, 0) + weight
     payouts = list(by_payout)
     log_mass = [math.log(by_payout[p]) for p in payouts]
     if not min(payouts) < target < max(payouts):
-        raise RuntimeError(f"{mode}: target {target / 100}x outside book payouts {min(payouts) / 100}..{max(payouts) / 100}x")
+        raise RuntimeError(f"{label}: target {target / 100}x outside book payouts {min(payouts) / 100}..{max(payouts) / 100}x")
 
     def mean_at(theta: float) -> float:
         exponents = [m + theta * p for m, p in zip(log_mass, payouts)]
@@ -137,13 +140,28 @@ def tilt_weights(gamestate, mode: str) -> float:
             low = mid
         else:
             high = mid
-    theta = (low + high) / 2
+    return (low + high) / 2
 
+
+def tilted(rows, theta: float) -> list:
+    """Rows reweighted by exp(theta * payout); equal-weight tables are scaled up first (TILT_MIN_WEIGHT)."""
     scale = max(1, math.ceil(TILT_MIN_WEIGHT / min(weight for _, weight, _ in rows)))
-    with open(path, "w", encoding="UTF-8", newline="") as file:
-        writer = csv.writer(file, lineterminator="\n")
-        for book_id, weight, payout in rows:
-            writer.writerow([book_id, round(weight * scale * math.exp(theta * payout)), payout])
+    return [(book_id, round(weight * scale * math.exp(theta * payout)), payout) for book_id, weight, payout in rows]
+
+
+def tilt_weights(gamestate, mode: str) -> float:
+    """Reweights a mode's lookup table onto its BetMode RTP with the smallest change in distribution.
+
+    Every book's weight w becomes w * exp(theta * win) (exponential tilting: the minimum-KL
+    reweighting with that mean), with theta solved so the weighted RTP equals the target.
+    Hit rates and the shape of the win distribution stay close to the books' natural odds.
+    Returns theta.
+    """
+    bet_mode = get_bet_mode(gamestate, mode)
+    path = gamestate.output_files.lookups[mode]["paths"]["optimized_lookup"]
+    rows = read_lookup(path)
+    theta = solve_tilt(rows, bet_mode.get_rtp() * bet_mode.get_cost() * 100, mode)
+    write_lookup(path, tilted(rows, theta))
     return theta
 
 
@@ -155,31 +173,70 @@ def clear_publish_lookups(gamestate, modes) -> None:
             os.remove(path)
 
 
-def set_mwon_weights(gamestate) -> None:
-    """Weights the mwon lookup table so P(win) is exactly `win_probability`, whatever the book counts.
+def vault_full_probability(config) -> Fraction:
+    """Exact P(full grid) of the mwon vault round, from a Markov chain over (keys on the grid, respins left).
 
-    Win books get weight p_num * losses and loss books (den - p_num) * wins, so
-    P(win) = p_num / den exactly (0.0384 = 24/625 -> 96.00% RTP at 25,000x for 1000x).
+    Each respin every one of the `d` empty cells lands a key with p, so k keys land with
+    C(d, k) p^k (1 - p)^(d - k); any key resets the respins, none uses one up.
     """
-    path = gamestate.output_files.lookups[MWON_MODE]["paths"]["optimized_lookup"]
-    with open(path, "r", encoding="UTF-8") as file:
-        rows = [(int(r[0]), int(r[1]), int(r[2])) for r in csv.reader(file) if r]
-    wins = sum(1 for _, _, payout in rows if payout > 0)
-    losses = len(rows) - wins
-    if not wins or not losses:
-        raise RuntimeError(f"mwon needs win and loss books, got {wins} wins and {losses} losses")
+    settings = config.max_win_or_nothing
+    cells = config.num_reels * config.num_rows[0]
+    respins = settings["respins"]
+    p = Fraction(str(settings["land_probability"]))
+    states = {(settings["start_keys"], respins): Fraction(1)}
+    full = Fraction(0)
+    for keys in range(settings["start_keys"], cells):
+        doors = cells - keys
+        for left in range(respins, 0, -1):
+            prob = states.pop((keys, left), 0)
+            if not prob:
+                continue
+            for landed in range(doors + 1):
+                q = prob * math.comb(doors, landed) * p**landed * (1 - p) ** (doors - landed)
+                if keys + landed == cells:
+                    full += q
+                elif landed:
+                    states[(keys + landed, respins)] = states.get((keys + landed, respins), 0) + q
+                elif left > 1:
+                    states[(keys, left - 1)] = states.get((keys, left - 1), 0) + q
+    return full
 
-    p = Fraction(str(gamestate.config.max_win_or_nothing["win_probability"]))
-    win_weight, loss_weight = p.numerator * losses, (p.denominator - p.numerator) * wins
-    with open(path, "w", encoding="UTF-8", newline="") as file:
-        writer = csv.writer(file, lineterminator="\n")
-        for book_id, _, payout in rows:
-            writer.writerow([book_id, win_weight if payout > 0 else loss_weight, payout])
+
+def set_mwon_weights(gamestate) -> float:
+    """Full-grid books share the exact P(full grid); the other books are tilted onto the published RTP.
+
+    The other books (criteria `basegame`) are tilted so p * prize + (1 - p) * their mean equals
+    the BetMode RTP x cost; the jackpot books (`wincap`) then split p / (1 - p) of that weight
+    equally, so P(jackpot) is `vault_full_probability` up to integer rounding (< 1e-12).
+    Returns theta of the tilt.
+    """
+    settings = gamestate.config.max_win_or_nothing
+    bet_mode = get_bet_mode(gamestate, MWON_MODE)
+    path = gamestate.output_files.lookups[MWON_MODE]["paths"]["optimized_lookup"]
+    criteria = read_criteria(gamestate, MWON_MODE)
+    rows = read_lookup(path)
+    jackpots = [row for row in rows if criteria[row[0]] == "wincap"]
+    others = [row for row in rows if criteria[row[0]] == "basegame"]
+    prize = round(settings["win_amount"] * 100)
+    if not jackpots or not others or len(jackpots) + len(others) != len(rows):
+        raise RuntimeError(f"mwon needs only jackpot and other books, got {len(jackpots)} + {len(others)} of {len(rows)}")
+    if any(payout != prize for _, _, payout in jackpots) or any(payout >= prize for _, _, payout in others):
+        raise RuntimeError(f"only mwon jackpot books may pay {prize / 100}x")
+
+    p = float(vault_full_probability(gamestate.config))
+    target = (bet_mode.get_rtp() * bet_mode.get_cost() * 100 - p * prize) / (1 - p)
+    theta = solve_tilt(others, target, f"{MWON_MODE} non-jackpot")
+    others = tilted(others, theta)
+    jackpot_weight = round(p / (1 - p) * sum(weight for _, weight, _ in others) / len(jackpots))
+    weights = {book_id: weight for book_id, weight, _ in others}
+    weights.update({book_id: jackpot_weight for book_id, _, _ in jackpots})
+    write_lookup(path, [(book_id, weights[book_id], payout) for book_id, _, payout in rows])
+    return theta
 
 
 def main(num_sim_args=None, threads=NUM_THREADS, batching_size=BATCHING_SIZE, compression=COMPRESSION):
     num_sim_args = dict(num_sim_args or NUM_SIM_ARGS)
-    # mwon is weighted exactly by set_mwon_weights, never by the optimizer
+    # mwon is weighted by set_mwon_weights (exact jackpot share), never by the optimizer
     target_modes = [mode for mode in num_sim_args if mode != MWON_MODE]
 
     config = GameConfig()

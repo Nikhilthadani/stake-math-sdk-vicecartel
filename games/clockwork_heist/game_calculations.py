@@ -1,29 +1,25 @@
 from game_config import WILD
-from src.calculations.lines import Lines
+from src.calculations.statistics import get_random_outcome
 from src.executables.executables import Executables
 
 
 class GameCalculations(Executables):
-    """Free-spins mechanics (sticky wilds, Gold Meter, minimum award) and the Max Win or Nothing screen."""
+    """Free-spins mechanics (sticky wilds, Gold Meter, minimum award) and the Max Win or Nothing vault grid."""
 
-    def draw_mwon_presentation(self, is_win: bool) -> list:
-        """Rejection-samples MWON screens until one matches the outcome (engine `drawMwonPresentation`).
+    def vault_doors(self) -> list:
+        """Vault cells without a key, reel by reel, top to bottom (engine `emptyCells`)."""
+        return [
+            (reel, row)
+            for reel in range(self.config.num_reels)
+            for row in range(self.config.num_rows[reel])
+            if (reel, row) not in self.vault
+        ]
 
-        Win: at least one 5-of-a-kind line. Loss: no 5-of-a-kind, plus a 4-of-a-kind near miss when
-        `require_near_miss_on_loss`. Returns the screen's line wins at paytable value.
-        """
-        settings = self.config.max_win_or_nothing
-        for _ in range(settings["presentation_samples"]):
-            self.create_board_reelstrips()
-            wins = Lines.get_lines(self.board, self.config, wild_key="wild", wild_sym=WILD)["wins"]
-            kinds = {w["kind"] for w in wins}
-            if is_win and 5 in kinds:
-                return wins
-            if not is_win and 5 not in kinds and (not settings["require_near_miss_on_loss"] or 4 in kinds):
-                return wins
-        raise RuntimeError(
-            f"No {'win' if is_win else 'loss'} presentation found in {settings['presentation_samples']} samples"
-        )
+    def vault_land_key(self, cell: tuple) -> dict:
+        """Puts a Vault Key with a drawn multiplier on `cell`; it stays for the rest of the round."""
+        multiplier = get_random_outcome(self.config.max_win_or_nothing["mult_weights"])
+        self.vault[cell] = multiplier
+        return {"reel": cell[0], "row": cell[1], "multiplier": multiplier}
 
     def apply_sticky_wilds(self) -> None:
         """Locked cells show a wild with the multiplier it first landed with, whatever the reel stopped on."""

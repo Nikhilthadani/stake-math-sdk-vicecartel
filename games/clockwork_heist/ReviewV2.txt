@@ -1,0 +1,34 @@
+Tail Probability (25,000x)
+0.0030
+/ 0.0020
+0.0030
+/ 0.0050
+What it is: How likely a single round is to pay 25,000x or more. Bet size and cost multiplier don't change it.
+
+How to fix: Make payouts of 25,000x or more happen less often in the distribution.
+
+Failing in 2 Star: mwon
+---
+Risk Limit (CVaR, absolute)
+25000.0
+/ 20000.0
+25000.0
+/ 50000.0
+What it is: The same worst-0.1% expected payout, but in raw base-bet multiples (not divided by cost). It bounds absolute operator liability, so a high-cost mode can't hide a large tail behind its stake.
+
+How to fix: Lower the size of the most extreme wins.
+
+Failing in 2 Star: mwon
+
+---
+
+Expected Tail Liability (10,000x)
+0.601
+/ 0.600
+0.601
+/ 0.800
+What it is: The cumulative RTP share that comes from wins above 10,000x.
+
+How to fix: Move RTP away from the biggest wins (above 10,000x) toward smaller ones.
+
+Failing in 2 Star: mwon

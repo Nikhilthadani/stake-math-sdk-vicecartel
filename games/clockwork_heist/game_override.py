@@ -33,6 +33,8 @@ class GameStateOverride(GameExecutables):
         self.book = EventBook(self.book_id, self.criteria)
         self.locked_wilds = {}
         self.fs_summary = None
+        self.vault = {}
+        self.vault_summary = None
 
     def update_final_win(self) -> None:
         """Pays the round total rounded down to 0.1x: Stake accepts payout multipliers in steps of 10 (x100).
@@ -58,12 +60,14 @@ class GameStateOverride(GameExecutables):
 
     def assign_mult_property(self, symbol) -> None:
         """Every wild that lands draws a 2x/3x/5x multiplier, in the base game and in free spins."""
-        multiplier_value = get_random_outcome(self.get_current_distribution_conditions()["mult_values"][self.gametype])
-        symbol.assign_attribute({"multiplier": multiplier_value})
+        weights = self.get_current_distribution_conditions()["mult_values"][self.gametype]
+        symbol.assign_attribute({"multiplier": get_random_outcome(weights)})
 
     def check_repeat(self):
         super().check_repeat()
         if self.repeat is False:
             win_criteria = self.get_current_betmode_distributions().get_win_criteria()
             if win_criteria is None and self.final_win == 0:
+                self.repeat = True
+            if self.vault_summary is not None and self.vault_summary["full"] != (self.criteria == "wincap"):
                 self.repeat = True

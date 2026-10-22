@@ -1,6 +1,15 @@
+import random
+
 from game_override import GameStateOverride
-from game_events import gold_meter_event, min_award_event, mwon_result_event, reveal_event, set_total_event
-from src.calculations.lines import Lines
+from game_events import (
+    gold_meter_event,
+    min_award_event,
+    reveal_event,
+    set_total_event,
+    vault_end_event,
+    vault_respin_event,
+    vault_start_event,
+)
 
 
 class GameState(GameStateOverride):
@@ -32,30 +41,45 @@ class GameState(GameStateOverride):
         self.imprint_wins()
 
     def run_mwon(self):
-        """Max Win or Nothing (engine `playMaxWinOrNothing`).
+        """Max Win or Nothing (engine `playVault`): the Sticky Wild Vault hold & respin on the 5 x 4 grid.
 
-        The book's criteria is the outcome (`wincap` = win, `0` = lose); the lookup-table
-        weights carry the win probability. The screen is drawn to match: a win pays the flat
-        prize on the first 5-of-a-kind line (x1, never the paytable); a loss pays nothing.
+        - `start_keys` Vault Keys land on random cells, each with a multiplier.
+        - On each respin every empty cell lands a key with `land_probability`; keys stick.
+        - Respins start at `respins`; a respin that lands a key resets them, one that lands none
+          uses one up. The round ends at 0 respins or a full grid.
+        - A full grid pays the flat `win_amount` (max win); otherwise the sum of all key
+          multipliers, at least `min_award`.
+
+        Rounds play naturally. The book's criteria is the outcome class (`wincap` = full grid,
+        `basegame` = any other), so `check_repeat` plays a round of the other class again; the
+        lookup weights carry the jackpot probability (run.py `set_mwon_weights`).
         """
-        is_win = self.criteria == "wincap"
-        line_wins = self.draw_mwon_presentation(is_win)
-        reveal_event(self)
+        settings = self.config.max_win_or_nothing
+        for _ in range(settings["start_keys"]):
+            self.vault_land_key(random.choice(self.vault_doors()))
+        respins_left = settings["respins"]
+        vault_start_event(self, respins_left)
 
-        prize = min(self.config.max_win_or_nothing["win_amount"], self.config.wincap) if is_win else 0.0
-        mwon_result_event(self, is_win, prize)
+        respins = 0
+        doors = self.vault_doors()
+        while respins_left > 0 and doors:
+            new_keys = [self.vault_land_key(cell) for cell in doors if random.random() < settings["land_probability"]]
+            doors = self.vault_doors()
+            respins += 1
+            respins_left = 0 if not doors else settings["respins"] if new_keys else respins_left - 1
+            vault_respin_event(self, respins, new_keys, respins_left)
 
-        if is_win:
-            five = next(w for w in line_wins if w["kind"] == 5)
-            five["win"] = prize
-            five["meta"].update({"multiplier": 1, "winWithoutMult": prize, "lineMultiplier": 1})
-            self.win_data = {"totalWin": prize, "wins": [five]}
-            Lines.record_lines_wins(self)
-        else:
-            self.win_data = {"totalWin": 0.0, "wins": []}
-        self.win_manager.update_spinwin(prize)
-        self.emit_linewin_events()
+        full = not doors
+        multiplier_sum = sum(self.vault.values())
+        min_award_applied = not full and multiplier_sum < settings["min_award"]
+        win = min(settings["win_amount"], self.config.wincap) if full else max(multiplier_sum, settings["min_award"])
+        self.vault_summary = {"full": full, "keys": len(self.vault), "respins": respins,
+                              "multiplier_sum": multiplier_sum, "min_award_applied": min_award_applied}
+        self.win_manager.update_spinwin(win)
         self.win_manager.update_gametype_wins(self.gametype)
+        vault_end_event(self, respins, full, multiplier_sum, min_award_applied, win)
+        self.evaluate_wincap()
+        set_total_event(self)
         self.evaluate_finalwin()
 
     def run_freespin(self):
