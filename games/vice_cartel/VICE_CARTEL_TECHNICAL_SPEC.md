@@ -1,5 +1,8 @@
 # Vice Cartel — Technical Specification
 
+> **Outdated (math v1).** The live math is v2.0: see `vc_math/docs/MATH_SPEC.md` for the math and
+> `frontend/FRONTEND_INTEGRATION.md` for modes, events and config.
+
 **Target RTP 96.30% | Max Win 25,000x | 5×4 Grid | 14 Paylines | 6 Bet Modes**
 
 All numbers below come from `game_config.py` or the published run (1,000,000 books per mode,

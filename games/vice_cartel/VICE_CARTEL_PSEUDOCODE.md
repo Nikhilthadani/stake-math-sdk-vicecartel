@@ -1,5 +1,8 @@
 # Vice Cartel — Implementation in Pseudocode
 
+> **Outdated (math v1).** The live math is v2.0: see `vc_math/docs/MATH_SPEC.md` for the math and
+> `frontend/FRONTEND_INTEGRATION.md` for modes, events and config.
+
 The simplest possible walk-through of what the code does on every spin.
 Each block names the real function it mirrors, so you can jump from here to the code.
 

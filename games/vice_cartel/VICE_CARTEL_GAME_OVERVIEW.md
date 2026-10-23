@@ -1,5 +1,8 @@
 # Vice Cartel — Game Overview
 
+> **Outdated (math v1).** The live math is v2.0: see `vc_math/docs/MATH_SPEC.md` for the math and
+> `frontend/FRONTEND_INTEGRATION.md` for modes, events and config.
+
 **A high-volatility slot game with full-reel Wilds, summed multipliers, four bonus tiers, and premium buy features.**
 
 ---

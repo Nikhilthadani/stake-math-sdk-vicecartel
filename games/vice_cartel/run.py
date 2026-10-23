@@ -1,10 +1,12 @@
-"""Vice Cartel — simulation runner."""
+"""Vice Cartel — simulation runner (natural stratified books, no optimizer)."""
 
+import glob
 import os
+import sys
 from gamestate import GameState
 from game_config import GameConfig
-from game_optimization import OptimizationSetup
-from optimization_program.run_script import OptimizationExecution
+from game_override import raw_wins_dir
+from game_weights import apply_natural_weights
 from utils.game_analytics.run_analysis import create_stat_sheet
 from utils.rgs_verification import execute_all_tests
 from src.state.run_sims import create_books
@@ -13,60 +15,54 @@ from src.write_data.write_configs import generate_configs
 if __name__ == "__main__":
 
     num_threads = 10
-    rust_threads = 20
-    batching_size = 5000
+    batching_size = 1000
     compression = True
     profiling = False
-
-    num_sim_args = {
-        "base": int(1e6),
-        "golden_case": int(1e6),
-        "extra_chance_3x": int(1e6),
-        "extra_chance_5x": int(1e6),
-        "min2wild_200x": int(1e6),
-        "min2wild_250x": int(1e6),
-    }
-
-    run_conditions = {
-        "run_sims": True,
-        "run_optimization": True,
-        "run_analysis": True,
-        "run_format_checks": True,
-    }
-    # Golden Case and Min 2 Wild publish their natural books unweighted (raw RTP is already in band)
-    target_modes = ["base", "extra_chance_3x", "extra_chance_5x"]
 
     config = GameConfig()
     gamestate = GameState(config)
 
-    if run_conditions.get("run_optimization") or run_conditions.get("run_analysis"):
-        optimization_setup_class = OptimizationSetup(config)
+    # Book counts come from the fixed per-class amounts in game_config.py
+    num_sim_args = {
+        bm.get_name(): sum(d.get_fixed_amt() for d in bm.get_distributions()) for bm in config.bet_modes
+    }
+
+    run_conditions = {
+        "run_sims": True,
+        "run_weights": True,
+        "run_analysis": False,
+        "run_format_checks": True,
+    }
+
+    # Optional CLI mode list re-simulates only those modes; weighting always covers all
+    sim_modes = {m: num_sim_args[m] for m in sys.argv[1:]} if len(sys.argv) > 1 else dict(num_sim_args)
 
     if run_conditions["run_sims"]:
-        # A previous publish table would point at the old books, and the SDK never overwrites it
-        for mode in num_sim_args:
-            stale_lookup = gamestate.output_files.get_optimized_lookup_name(mode)
-            if os.path.exists(stale_lookup):
-                os.remove(stale_lookup)
+        # A previous publish table or raw-win sidecar would point at the old books
+        for mode in sim_modes:
+            stale = [gamestate.output_files.get_optimized_lookup_name(mode)]
+            stale += glob.glob(os.path.join(raw_wins_dir(gamestate), f"raw_{mode}_*.csv"))
+            for path in stale:
+                if os.path.exists(path):
+                    os.remove(path)
 
         create_books(
             gamestate,
             config,
-            num_sim_args,
+            sim_modes,
             batching_size,
             num_threads,
             compression,
             profiling,
         )
 
+    if run_conditions["run_weights"]:
+        apply_natural_weights(gamestate, list(num_sim_args))
+
     generate_configs(gamestate)
 
-    if run_conditions.get("run_optimization"):
-        OptimizationExecution().run_all_modes(config, target_modes, rust_threads)
-        generate_configs(gamestate)
-
-    if run_conditions.get("run_analysis"):
+    if run_conditions["run_analysis"]:
         create_stat_sheet(gamestate)
 
-    if run_conditions.get("run_format_checks"):
+    if run_conditions["run_format_checks"]:
         execute_all_tests(config)

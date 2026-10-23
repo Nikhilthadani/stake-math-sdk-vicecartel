@@ -1,10 +1,27 @@
 """Vice Cartel — state overrides."""
 
+import os
 import random
 from game_executables import GameExecutables
+from game_config import BONUS_TIERS
+
+
+def raw_wins_dir(gamestate) -> str:
+    return os.path.join(gamestate.output_files.library_path, "raw_wins")
 
 
 class GameStateOverride(GameExecutables):
+
+    def run_sims(self, betmode_copy_list, betmode, sim_to_criteria, total_threads, total_repeats, num_sims,
+                 thread_index, repeat_count, compress=True, write_event_list=True, simulation_seeds=[]):
+        """Also write each book's uncapped, unfloored round win; game_weights.py needs it for plain classes."""
+        self.raw_wins: list[tuple[int, float]] = []
+        super().run_sims(betmode_copy_list, betmode, sim_to_criteria, total_threads, total_repeats, num_sims,
+                         thread_index, repeat_count, compress, write_event_list, simulation_seeds)
+        os.makedirs(raw_wins_dir(self), exist_ok=True)
+        path = os.path.join(raw_wins_dir(self), f"raw_{betmode}_{thread_index}_{repeat_count}.csv")
+        with open(path, "w", encoding="UTF-8") as f:
+            f.writelines(f"{book_id},{raw!r}\n" for book_id, raw in self.raw_wins)
 
     def reset_book(self):
         super().reset_book()
@@ -18,6 +35,7 @@ class GameStateOverride(GameExecutables):
     def evaluate_finalwin(self) -> None:
         """RGS pays rounds in 0.1x steps: floor the round total, taking the excess from freegame first."""
         wm = self.win_manager
+        self.raw_round_win = wm.running_bet_win
         excess = (round(wm.running_bet_win * 100) % 10) / 100
         if excess > 0:
             from_free = min(excess, wm.freegame_wins)
@@ -26,32 +44,11 @@ class GameStateOverride(GameExecutables):
             wm.running_bet_win = round(wm.running_bet_win - excess, 2)
         super().evaluate_finalwin()
 
-    def check_repeat(self):
-        if self.repeat is False:
-            win_criteria = self.get_current_betmode_distributions().get_win_criteria()
-            if win_criteria is not None and self.final_win != win_criteria:
-                self.repeat = True
-                return
-            conds = self.get_current_distribution_conditions()
-            if conds.get("force_freegame") and not self.triggered_freegame:
-                self.repeat = True
-                return
-        self.repeat_count += 1
-        self.check_current_repeat_count()
-
-    TIER_CONFIG: dict[str, dict] = {
-        "normal_bonus":       {"spins": 10, "start_wilds": 0, "start_mult": 1},
-        "super_bonus":        {"spins": 10, "start_wilds": 1, "start_mult": 2},
-        "hidden_bonus":       {"spins": 12, "start_wilds": 2, "start_mult": 3},
-        "super_hidden_bonus": {"spins": 12, "start_wilds": 3, "start_mult": 5},
-    }
-
     def setup_bonus(self, tier: str) -> tuple[dict[int, int], int]:
-        cfg = self.TIER_CONFIG[tier]
+        """Initialise bonus state once from the tier table: fresh Wild positions, no carry-over."""
+        cfg = BONUS_TIERS[tier]
         self.bonus_tier = tier
         sticky: dict[int, int] = {}
-        if cfg["start_wilds"] > 0:
-            positions = random.sample(range(self.config.num_reels), cfg["start_wilds"])
-            for reel in positions:
-                sticky[reel] = cfg["start_mult"]
+        for reel in random.sample(range(self.config.num_reels), cfg["start_wilds"]):
+            sticky[reel] = cfg["start_mult"]
         return sticky, cfg["spins"]

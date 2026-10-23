@@ -1,0 +1,11 @@
+normal_bonus {'N': 2000000.0, 'ev': 96.51749, 'se': 0.34329, 'sd': 485.48042, 'p_max_win': 0.00012, 'p_maxwin_segment': 0.00011, 'avg_spins': 11.28105, 'max_spins': 29.0, 'p_zero': 0.02094, 'max_observed': 25000.0, 'exact_ev_uncapped': 96.59167, 'exact_p_maxwin_segment': 0.0001, 'exact_avg_spins': 11.28144}
+super_bonus {'N': 2000000.0, 'ev': 192.12877, 'se': 0.48859, 'sd': 690.96382, 'p_max_win': 0.00028, 'p_maxwin_segment': 0.00026, 'avg_spins': 11.01294, 'max_spins': 27.0, 'p_zero': 0.00302, 'max_observed': 25000.0, 'exact_ev_uncapped': 193.08852, 'exact_p_maxwin_segment': 0.00025, 'exact_avg_spins': 11.0135}
+hidden_bonus {'N': 2000000.0, 'ev': 1471.06223, 'se': 1.49668, 'sd': 2116.61863, 'p_max_win': 0.00254, 'p_maxwin_segment': 0.00202, 'avg_spins': 13.79718, 'max_spins': 34.0, 'p_zero': 9e-05, 'max_observed': 25000.0, 'exact_ev_uncapped': 1474.59895, 'exact_p_maxwin_segment': 0.002, 'exact_avg_spins': 13.79928}
+super_hidden_bonus {'N': 2000000.0, 'ev': 3392.97871, 'se': 2.04841, 'sd': 2896.88985, 'p_max_win': 0.00784, 'p_maxwin_segment': 0.00673, 'avg_spins': 13.76252, 'max_spins': 38.0, 'p_zero': 0.0, 'max_observed': 25000.0, 'exact_ev_uncapped': 3406.30207, 'exact_p_maxwin_segment': 0.00667, 'exact_avg_spins': 13.76735}
+paired normal_bonus {'N': 4000000.0, 'exact_uncapped': 96.5917, 'correction': -0.1923, 'correction_se': 0.0405, 'ev': 96.3993, 'se': 0.0405, 'sim_U_mean': 96.5044}
+paired super_bonus {'N': 4000000.0, 'exact_uncapped': 193.0885, 'correction': -0.3189, 'correction_se': 0.0397, 'ev': 192.7697, 'se': 0.0397, 'sim_U_mean': 192.8393}
+paired hidden_bonus {'N': 4000000.0, 'exact_uncapped': 1474.5989, 'correction': -5.8288, 'correction_se': 0.209, 'ev': 1468.7701, 'se': 0.209, 'sim_U_mean': 1474.7076}
+paired super_hidden_bonus {'N': 4000000.0, 'exact_uncapped': 3406.3021, 'correction': -11.612, 'correction_se': 0.2982, 'ev': 3394.6901, 'se': 0.2982, 'sim_U_mean': 3407.1737}
+base precise 0.9639856428656615 5.511559245217706e-05 e2e 0.9532762199999999 0.010420932454563223
+extra_chance precise 0.9639794726588559 9.139581478365289e-05 e2e 0.9558842049999999 0.007263204662741349
+done 1426.5747134685516

@@ -1,0 +1,31 @@
+{
+  "id": 4,
+  "payoutMultiplier": 2500000,
+  "events": [
+    {
+      "index": 0,
+      "type": "goldenCaseReveal",
+      "lettersLanded": 3,
+      "maxWin": true
+    },
+    {
+      "index": 1,
+      "type": "setWin",
+      "amount": 2500000,
+      "winLevel": 10
+    },
+    {
+      "index": 2,
+      "type": "setTotalWin",
+      "amount": 2500000
+    },
+    {
+      "index": 3,
+      "type": "finalWin",
+      "amount": 2500000
+    }
+  ],
+  "criteria": "golden_case",
+  "baseGameWins": 25000.0,
+  "freeGameWins": 0.0
+}

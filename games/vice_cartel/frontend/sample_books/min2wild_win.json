@@ -1,0 +1,278 @@
+{
+  "id": 85,
+  "payoutMultiplier": 60,
+  "events": [
+    {
+      "index": 0,
+      "type": "wildReel",
+      "reel": 1,
+      "multiplier": 1
+    },
+    {
+      "index": 1,
+      "type": "wildReel",
+      "reel": 4,
+      "multiplier": 2
+    },
+    {
+      "index": 2,
+      "type": "reveal",
+      "board": [
+        [
+          {
+            "name": "L3"
+          },
+          {
+            "name": "L4"
+          },
+          {
+            "name": "L4"
+          },
+          {
+            "name": "L4"
+          }
+        ],
+        [
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          }
+        ],
+        [
+          {
+            "name": "H1"
+          },
+          {
+            "name": "L4"
+          },
+          {
+            "name": "L1"
+          },
+          {
+            "name": "L2"
+          }
+        ],
+        [
+          {
+            "name": "L2"
+          },
+          {
+            "name": "H3"
+          },
+          {
+            "name": "L1"
+          },
+          {
+            "name": "L3"
+          }
+        ],
+        [
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          },
+          {
+            "name": "W",
+            "wild": true
+          }
+        ]
+      ],
+      "paddingPositions": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "gameType": "basegame",
+      "anticipation": [
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "index": 3,
+      "type": "spinMultiplier",
+      "multiplier": 3
+    },
+    {
+      "index": 4,
+      "type": "winInfo",
+      "totalWin": 60,
+      "wins": [
+        {
+          "symbol": "L4",
+          "kind": 3,
+          "win": 12,
+          "positions": [
+            {
+              "reel": 0,
+              "row": 2
+            },
+            {
+              "reel": 1,
+              "row": 2
+            },
+            {
+              "reel": 2,
+              "row": 2
+            }
+          ],
+          "meta": {
+            "lineIndex": 2,
+            "multiplier": 1,
+            "winWithoutMult": 4,
+            "globalMult": 1,
+            "lineMultiplier": 1
+          }
+        },
+        {
+          "symbol": "L4",
+          "kind": 3,
+          "win": 12,
+          "positions": [
+            {
+              "reel": 0,
+              "row": 4
+            },
+            {
+              "reel": 1,
+              "row": 3
+            },
+            {
+              "reel": 2,
+              "row": 2
+            }
+          ],
+          "meta": {
+            "lineIndex": 6,
+            "multiplier": 1,
+            "winWithoutMult": 4,
+            "globalMult": 1,
+            "lineMultiplier": 1
+          }
+        },
+        {
+          "symbol": "L4",
+          "kind": 3,
+          "win": 12,
+          "positions": [
+            {
+              "reel": 0,
+              "row": 2
+            },
+            {
+              "reel": 1,
+              "row": 1
+            },
+            {
+              "reel": 2,
+              "row": 2
+            }
+          ],
+          "meta": {
+            "lineIndex": 7,
+            "multiplier": 1,
+            "winWithoutMult": 4,
+            "globalMult": 1,
+            "lineMultiplier": 1
+          }
+        },
+        {
+          "symbol": "L4",
+          "kind": 3,
+          "win": 12,
+          "positions": [
+            {
+              "reel": 0,
+              "row": 2
+            },
+            {
+              "reel": 1,
+              "row": 3
+            },
+            {
+              "reel": 2,
+              "row": 2
+            }
+          ],
+          "meta": {
+            "lineIndex": 11,
+            "multiplier": 1,
+            "winWithoutMult": 4,
+            "globalMult": 1,
+            "lineMultiplier": 1
+          }
+        },
+        {
+          "symbol": "L4",
+          "kind": 3,
+          "win": 12,
+          "positions": [
+            {
+              "reel": 0,
+              "row": 4
+            },
+            {
+              "reel": 1,
+              "row": 3
+            },
+            {
+              "reel": 2,
+              "row": 2
+            }
+          ],
+          "meta": {
+            "lineIndex": 14,
+            "multiplier": 1,
+            "winWithoutMult": 4,
+            "globalMult": 1,
+            "lineMultiplier": 1
+          }
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "type": "setWin",
+      "amount": 60,
+      "winLevel": 2
+    },
+    {
+      "index": 6,
+      "type": "setTotalWin",
+      "amount": 60
+    },
+    {
+      "index": 7,
+      "type": "finalWin",
+      "amount": 60
+    }
+  ],
+  "criteria": "wilds2_m0",
+  "baseGameWins": 0.6,
+  "freeGameWins": 0.0
+}

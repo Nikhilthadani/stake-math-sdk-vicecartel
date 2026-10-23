@@ -57,6 +57,8 @@ class BetMode:
 
     def add_force_key(self, force_key: list):
         """Update force keys."""
+        if isinstance(self._force_keys, tuple):
+            self._force_keys = list(self._force_keys)
         self._force_keys.append(str(force_key))  # type:ignore
 
     def lock_force_keys(self):

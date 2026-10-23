@@ -1,0 +1,356 @@
+{
+  "base_five_wilds_max_win": {
+    "mode": "base",
+    "bookId": 0,
+    "payoutMultiplier": 2500000,
+    "eventTypes": [
+      "finalWin",
+      "fiveWilds",
+      "reveal",
+      "setTotalWin",
+      "wildReel",
+      "wincap"
+    ]
+  },
+  "base_line_win": {
+    "mode": "base",
+    "bookId": 100,
+    "payoutMultiplier": 40,
+    "eventTypes": [
+      "finalWin",
+      "reveal",
+      "setTotalWin",
+      "setWin",
+      "winInfo"
+    ]
+  },
+  "base_no_win": {
+    "mode": "base",
+    "bookId": 102,
+    "payoutMultiplier": 0,
+    "eventTypes": [
+      "finalWin",
+      "reveal",
+      "setTotalWin"
+    ]
+  },
+  "base_wild_multiplier_win": {
+    "mode": "base",
+    "bookId": 400102,
+    "payoutMultiplier": 230,
+    "eventTypes": [
+      "finalWin",
+      "reveal",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "wildReel",
+      "winInfo"
+    ]
+  },
+  "base_bonus_normal": {
+    "mode": "base",
+    "bookId": 1520101,
+    "payoutMultiplier": 1830,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_wheel_red": {
+    "mode": "base",
+    "bookId": 1520101,
+    "payoutMultiplier": 1830,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_wheel_blue": {
+    "mode": "base",
+    "bookId": 1520101,
+    "payoutMultiplier": 1830,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_wheel_yellow": {
+    "mode": "base",
+    "bookId": 1520101,
+    "payoutMultiplier": 1830,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_wheel_blue_no_wild": {
+    "mode": "base",
+    "bookId": 1520103,
+    "payoutMultiplier": 16730,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_wincap_by_wins": {
+    "mode": "base",
+    "bookId": 1549695,
+    "payoutMultiplier": 2500000,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo",
+      "wincap"
+    ]
+  },
+  "base_bonus_wheel_max_win": {
+    "mode": "base",
+    "bookId": 1553204,
+    "payoutMultiplier": 2500000,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "fiveWilds",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo",
+      "wincap"
+    ]
+  },
+  "base_bonus_super": {
+    "mode": "base",
+    "bookId": 1750100,
+    "payoutMultiplier": 17730,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_hidden": {
+    "mode": "base",
+    "bookId": 1900100,
+    "payoutMultiplier": 183870,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "base_bonus_super_hidden": {
+    "mode": "base",
+    "bookId": 1950100,
+    "payoutMultiplier": 293790,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "extra_chance_bonus": {
+    "mode": "extra_chance",
+    "bookId": 1520100,
+    "payoutMultiplier": 1350,
+    "eventTypes": [
+      "bonusStart",
+      "bonusTrigger",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "scatterPay",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "bonus_normal_buy": {
+    "mode": "bonus_normal",
+    "bookId": 0,
+    "payoutMultiplier": 85600,
+    "eventTypes": [
+      "bonusStart",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "bonus_super_buy": {
+    "mode": "bonus_super",
+    "bookId": 0,
+    "payoutMultiplier": 1470,
+    "eventTypes": [
+      "bonusStart",
+      "finalWin",
+      "freeSpinEnd",
+      "reveal",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "stickyWildUpdate",
+      "updateFreeSpin",
+      "wheelSpin",
+      "winInfo"
+    ]
+  },
+  "min2wild_five_wilds_max_win": {
+    "mode": "min2wild",
+    "bookId": 0,
+    "payoutMultiplier": 2500000,
+    "eventTypes": [
+      "finalWin",
+      "fiveWilds",
+      "reveal",
+      "setTotalWin",
+      "wildReel",
+      "wincap"
+    ]
+  },
+  "min2wild_win": {
+    "mode": "min2wild",
+    "bookId": 85,
+    "payoutMultiplier": 60,
+    "eventTypes": [
+      "finalWin",
+      "reveal",
+      "setTotalWin",
+      "setWin",
+      "spinMultiplier",
+      "wildReel",
+      "winInfo"
+    ]
+  },
+  "golden_case_lose": {
+    "mode": "golden_case",
+    "bookId": 0,
+    "payoutMultiplier": 0,
+    "eventTypes": [
+      "finalWin",
+      "goldenCaseReveal",
+      "setTotalWin"
+    ]
+  },
+  "golden_case_win": {
+    "mode": "golden_case",
+    "bookId": 4,
+    "payoutMultiplier": 2500000,
+    "eventTypes": [
+      "finalWin",
+      "goldenCaseReveal",
+      "setTotalWin",
+      "setWin"
+    ]
+  }
+}

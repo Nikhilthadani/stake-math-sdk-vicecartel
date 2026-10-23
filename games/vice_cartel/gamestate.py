@@ -1,67 +1,84 @@
-"""Vice Cartel — main game state."""
+"""Vice Cartel — main game state (round order follows vc_math/vice_cartel_math/engine.py)."""
 
 from game_override import GameStateOverride
-from game_config import MIN2WILD_EXTRA_PROB_200X, MIN2WILD_EXTRA_PROB_250X, MYSTERY_OUTCOME_WEIGHTS
-from game_events import update_freespin_event, freespin_end_event, mystery_trigger_event
-from src.calculations.statistics import get_random_outcome
+from game_config import EXTRA_CHANCE_UPLIFT, TIER_BY_SCATTERS, BUY_BONUS_TIER, BONUS_TIERS
+from game_events import update_freespin_event, freespin_end_event, bonus_trigger_event, bonus_start_event
 
-_BONUS_TIER_WEIGHTS = {k: v for k, v in MYSTERY_OUTCOME_WEIGHTS.items() if k != "no_bonus"}
-
-# Mode → extra-wild probability for Min 2 Wild
-_MIN2WILD_EXTRA_PROB: dict[str, float] = {
-    "min2wild_200x": MIN2WILD_EXTRA_PROB_200X,
-    "min2wild_250x": MIN2WILD_EXTRA_PROB_250X,
+_SCATTER_UPLIFT: dict[str, float] = {"base": 1.0, "extra_chance": EXTRA_CHANCE_UPLIFT}
+_BONUS_SPIN_SAFETY_LIMIT = 200
+# Distinct RNG streams per mode, so modes sharing book classes never get identical books
+_MODE_SEED_OFFSET: dict[str, int] = {
+    "base": 0, "extra_chance": 10**9, "bonus_normal": 2 * 10**9, "bonus_super": 3 * 10**9,
+    "min2wild": 4 * 10**9, "golden_case": 5 * 10**9,
 }
 
 
 class GameState(GameStateOverride):
 
     def run_spin(self, sim, simulation_seed=None):
-        self.reset_seed(sim)
+        self.reset_seed(sim, seed_override=_MODE_SEED_OFFSET[self.betmode] + sim)
         self.repeat = True
         while self.repeat:
             self.reset_book()
 
             if self.in_mode("golden_case"):
                 self.run_golden_case()
-                self.evaluate_finalwin()
-                self.repeat = False
-                break
-
-            if self.betmode in _MIN2WILD_EXTRA_PROB:
-                self.draw_min2wild_board(_MIN2WILD_EXTRA_PROB[self.betmode])
-                self.evaluate_lines_with_wilds()
-                self.evaluate_scatter_pay()
-                self.win_manager.update_gametype_wins(self.gametype)
-                self.evaluate_finalwin()
-                self.repeat = False
-                break
-
-            self.draw_wild_board()
-            self.evaluate_lines_with_wilds()
-            self.evaluate_scatter_pay()
-            self.win_manager.update_gametype_wins(self.gametype)
-
-            # Bonuses live only in the "freegame" criteria; its frequency is set by the optimizer
-            if self.get_current_distribution_conditions().get("force_freegame"):
+            elif self.in_mode("min2wild"):
+                self.run_min2wild()
+            elif self.betmode in BUY_BONUS_TIER:
                 self.triggered_freegame = True
-                self.run_bonus(self._forced_mystery_outcome())
+                self.run_bonus(BUY_BONUS_TIER[self.betmode])
+            else:
+                self.run_base(_SCATTER_UPLIFT[self.betmode])
 
             self.evaluate_finalwin()
             self.check_repeat()
+        if hasattr(self, "raw_wins"):
+            self.raw_wins.append((self.book.id, self.raw_round_win))
         self.imprint_wins()
+
+    def run_base(self, scatter_uplift: float) -> None:
+        scatters = self.draw_base_board(scatter_uplift)
+        if self.is_five_wilds():
+            self.award_five_wilds()
+            self.win_manager.update_gametype_wins(self.gametype)
+            return
+        self.evaluate_lines_with_wilds()
+        self.evaluate_scatter_pay()
+        self.win_manager.update_gametype_wins(self.gametype)
+
+        tier = TIER_BY_SCATTERS.get(scatters)
+        if tier is not None and not self.get_wincap_triggered():
+            self.triggered_freegame = True
+            bonus_trigger_event(self, tier, scatters)
+            self.record({"kind": "bonus", "tier": tier, "gametype": self.gametype})
+            self.run_bonus(tier)
+
+    def run_min2wild(self) -> None:
+        self.draw_min2wild_board()
+        if self.is_five_wilds():
+            self.award_five_wilds()
+        else:
+            self.evaluate_lines_with_wilds()
+        self.win_manager.update_gametype_wins(self.gametype)
 
     def run_bonus(self, tier: str) -> None:
         self.gametype = self.config.freegame_type
         sticky_wilds, turns_left = self.setup_bonus(tier)
+        self.tot_fs = BONUS_TIERS[tier]["spins"]
+        bonus_start_event(self, tier, turns_left, sticky_wilds)
         spin_count = 0
-        max_spins = 200  # safety cap — PAR avg is 12-16 spins
-        while turns_left > 0 and not self.get_wincap_triggered() and spin_count < max_spins:
+        while turns_left > 0 and not self.get_wincap_triggered() and spin_count < _BONUS_SPIN_SAFETY_LIMIT:
             self.win_manager.reset_spin_win()
             self.win_data = {}
             spin_count += 1
+            self.fs = spin_count
             update_freespin_event(self)
-            sticky_wilds, turns_left = self.resolve_wheel(sticky_wilds, turns_left)
+            sticky_wilds, turns_left, max_win = self.resolve_wheel(tier, sticky_wilds, turns_left)
+            if max_win:
+                self.award_five_wilds()
+                self.win_manager.update_gametype_wins(self.gametype)
+                break
             self.run_bonus_spin(sticky_wilds)
             self.win_manager.update_gametype_wins(self.gametype)
             turns_left -= 1
@@ -70,9 +87,3 @@ class GameState(GameStateOverride):
 
     def run_freespin(self):
         pass
-
-    def _forced_mystery_outcome(self) -> str:
-        outcome = get_random_outcome(_BONUS_TIER_WEIGHTS)
-        mystery_trigger_event(self, outcome)
-        self.record({"kind": "mystery", "outcome": outcome, "gametype": self.gametype})
-        return outcome

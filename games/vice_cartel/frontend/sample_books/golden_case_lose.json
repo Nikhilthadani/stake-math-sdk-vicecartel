@@ -1,0 +1,25 @@
+{
+  "id": 0,
+  "payoutMultiplier": 0,
+  "events": [
+    {
+      "index": 0,
+      "type": "goldenCaseReveal",
+      "lettersLanded": 1,
+      "maxWin": false
+    },
+    {
+      "index": 1,
+      "type": "setTotalWin",
+      "amount": 0
+    },
+    {
+      "index": 2,
+      "type": "finalWin",
+      "amount": 0
+    }
+  ],
+  "criteria": "golden_case",
+  "baseGameWins": 0.0,
+  "freeGameWins": 0.0
+}
